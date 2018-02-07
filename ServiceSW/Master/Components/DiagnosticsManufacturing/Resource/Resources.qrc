@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/CheckBox">
-        <file>CheckBox-enabled-large.png</file>
-        <file>CheckBox-Checked.png</file>
-    </qresource>
-</RCC>

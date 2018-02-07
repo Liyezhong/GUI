@@ -1,8 +1,0 @@
-                <functionmodule type="temperature_control" key="${FM_KEY}" name="${FM_KEY}" interface="${FM_CHANNEL}">
-                    <configuration temp_tolerance="2" sampling_period="100" current_gain="7813" heater_current="800" heater_threshold="200"/>
-                    <pid_controllers>
-                        <pid_controller max_temperature="55" controller_gain="3543" reset_time="17300" derivative_time="2940"/>
-                        <pid_controller max_temperature="100" controller_gain="2940" reset_time="1100" derivative_time="440"/>
-                    </pid_controllers>
-                </functionmodule>
-

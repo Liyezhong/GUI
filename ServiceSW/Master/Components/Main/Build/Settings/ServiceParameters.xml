@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE ServiceParameters>
-<ServiceParameters Version="1">
-    <Network ProxyIPAddress="192.168.123.147" UserName="Himalaya"/>
-    <TestReportFolder TestReportFolderPath="/home/Himalaya/manufacturing-line-server/test-reports"/>
-    <FirmwareFolder FirmwareFolderPath="/home/Himalaya/manufacturing-line-server/software/Firmware"/>
-</ServiceParameters>

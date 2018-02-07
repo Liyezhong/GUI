@@ -1,5 +1,0 @@
-                <functionmodule type="analog_in" key="${FM_KEY}" name="${FM_KEY}" interface="${FM_CHANNEL}">
-                    <configuration enabled="1" timestamp="0" fast_sampling="${FAST_SAMPLING:-0}" limit_autosend="0" interval="${INTERVAL:-0}" debounce="0"/>
-                    <limit_supervision value1_send_at_exceed="0" value1_send_at_fall_below="0" value1_send_warn_message="0" value1_send_data_message="${VALUE1_SEND:-0}" value1="${VALUE1:-0}" value2_send_at_exceed="0" value2_send_at_fall_below="0" value2_send_warn_message="0" value2_send_data_message="0" value2="0" hysteresis="0"/>
-                </functionmodule>
-

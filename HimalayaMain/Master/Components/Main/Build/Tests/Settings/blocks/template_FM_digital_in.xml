@@ -1,4 +1,0 @@
-                <functionmodule type="digital_in" key="${FM_KEY}" name="${FM_KEY}" interface="${FM_CHANNEL}">
-                    <configuration enabled="1" timestamp="0" polarity="1" supervision="1" interval="10" debounce="5"/>
-                </functionmodule>
-

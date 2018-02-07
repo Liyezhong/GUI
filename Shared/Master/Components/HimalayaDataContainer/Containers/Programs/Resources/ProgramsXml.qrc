@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/Xml">
-        <file>ProgramsNOK.xml</file>
-        <file>Programs.xml</file>
-    </qresource>
-</RCC>

@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/Xml">
-        <file>Stations.xml</file>
-    </qresource>
-</RCC>

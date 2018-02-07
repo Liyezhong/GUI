@@ -1,9 +1,0 @@
-HeatingOvenSlice:20150706-091703,20150706-100010
-Scenario:3
-LastRVPosition:13
-ProgramID:
-StationList:S6,S7,
-ProgramStepID:1
-StationID:S7
-ErrorFlag:0
-LastReagentGroup:

@@ -1,7 +1,0 @@
-HeatingOvenSlice:20141113-101226,20141113-111226
-LastRVPosition:20
-ProgramID:
-ProgramStepID:3
-Scenario:4
-LastReagentGroup:RG1
-ErrorFlag:0

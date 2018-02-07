@@ -1,4 +1,0 @@
-                <functionmodule type="digital_out" key="${FM_KEY}" name="${FM_KEY}" interface="${FM_CHANNEL}">
-                    <configuration enabled="1" inactiv_shutdown="1" inactiv_emcy="1" polarity="0" outval_inactiv="0" livetime_limit="0"/>
-                </functionmodule>
-

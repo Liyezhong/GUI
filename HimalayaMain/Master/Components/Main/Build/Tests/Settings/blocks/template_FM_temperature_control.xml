@@ -1,7 +1,0 @@
-                <functionmodule type="temperature_control" key="${FM_KEY}" name="${FM_KEY}" interface="${FM_CHANNEL}">
-                    <configuration temp_tolerance="5" sampling_period="200" fan_speed="2950" fan_threshold="295" current_gain="7813" heater_current="3100" heater_threshold="200"/>
-                    <pid_controllers>
-                        <pid_controller max_temperature="70" controller_gain="1212" reset_time="1000" derivative_time="80"/>
-                    </pid_controllers>
-                </functionmodule>
-

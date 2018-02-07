@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE ProgramsSequence []>
-<ProgramsSequence Version="1">
-  <Program ID="L1" Used="true" Counter="47" StartCapable="true" BLGResult="0" />
-  <Program ID="L2" Used="false" Counter="47" StartCapable="false" BLGResult="0" />
-</ProgramsSequence>

@@ -1,7 +1,0 @@
-<!-- ************************************************************************************************* -->
-
-        <slave type="base" key="asb${ASB_TYPE}_${ASB_INDEX}" name="asb ${ASB_TYPE} ${ASB_INDEX}" virtual="0">
-            <nodetype>${ASB_TYPE}</nodetype>
-            <nodeindex>${ASB_INDEX}</nodeindex>
-            <functionmodules>
-

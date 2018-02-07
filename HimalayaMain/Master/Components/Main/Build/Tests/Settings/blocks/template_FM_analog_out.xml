@@ -1,4 +1,0 @@
-                <functionmodule type="analog_out" key="${FM_KEY}" name="${FM_KEY}" interface="${FM_CHANNEL}">
-                    <configuration enabled="1" inactiv_shutdown="1" inactiv_emcy="1" resolution="16" outval_inactiv="${OUTVAL:-255}" livetime_limit="${LIMIT:-255}"/>
-                </functionmodule>
-
