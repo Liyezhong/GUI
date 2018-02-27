@@ -22,7 +22,7 @@ SUBDIRS = ../../Shared/Master/Components/Global/Build/Global.pro \
           ../Components/Programs/Build/Programs.pro \
           ../Components/Reagents/Build/Reagents.pro \
           ../Components/Settings/Build/Settings.pro \
-          ../Components/Users/Build/Users.pro
+          ../Components/Users/Build/Users.pro \
           ../Components/Main/Build/Main.pro
 
 

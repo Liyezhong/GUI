@@ -6,7 +6,7 @@
 
 ################# override some pri settings #################
 TEMPLATE = app
-TARGET = himalaya_gui
+TARGET = skyline_gui
 CONFIG -= static
 QT +=   xml \
         network \
@@ -15,7 +15,7 @@ QT +=   xml \
 
 
 ################# list used platform libraries #################
-PLATFORM_COMPONENTS_DIR = ../../../../../../Platform/Master/Components
+PLATFORM_COMPONENTS_DIR = ../../../../Shared/Master/Components
 PLATFORM_COMPONENTS = NetworkComponents \
                       NetCommands \
                       Global \
@@ -25,7 +25,7 @@ PLATFORM_COMPONENTS = NetworkComponents \
                       
 
 ################# list used platform libraries #################
-PLATFORM_GUI_COMPONENTS_DIR = ../../../../../../Platform/Gui/Components
+PLATFORM_GUI_COMPONENTS_DIR = ../../../../Shared/Gui/Components
 PLATFORM_GUI_COMPONENTS = Application \
                           KeyBoard \
                           MainMenu
@@ -35,7 +35,7 @@ PLATFORM_GUI_COMPONENTS = Application \
 ##############################################################
 
 ################# list used shared master libraries #################
-SHARED_MASTER_COMPONENTS_DIR = ../../../../../Shared/Master/Components
+SHARED_MASTER_COMPONENTS_DIR = ../../../../Shared/Common/Components
 SHARED_MASTER_COMPONENTS = HimalayaDataContainer
 #                           NetCommands \
 #                           RMSCommands

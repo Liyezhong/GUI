@@ -25,8 +25,8 @@ INCLUDEPATH += ../.. \
                ../../../../Master/Include
 
 DEPENDPATH +=  ../.. \
-               ../../../../Share/Master/Components \
-               ../../../../Share/Gui/Components \
+               ../../../../Shared/Master/Components \
+               ../../../../Shared/Gui/Components \
                ../../../../Shared/Common/Components
 
 
