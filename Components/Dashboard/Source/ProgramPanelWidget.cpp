@@ -28,7 +28,8 @@ CProgramPanelWidget::CProgramPanelWidget(QWidget *p) :
     m_startButtonDisabledAsSysError(false),
     m_pauseButtonDisabledAsSysError(false),
     m_ProgramStartReady(false),
-    m_bWaitRotaryValveHeatingPrompt(false)
+    m_bWaitRotaryValveHeatingPrompt(false),
+    m_RetortNumber(0)
 {
     ui->setupUi(GetContentFrame());
     SetPanelTitle(tr("Programs"));
@@ -73,8 +74,14 @@ CProgramPanelWidget::CProgramPanelWidget(QWidget *p) :
     m_btnGroup.addButton(ui->pauseButton, Dashboard::secondButton);
 
     CONNECTSIGNALSLOT(&m_btnGroup, buttonClicked(int), this, OnButtonClicked(int));
+
+    //todo: enable pauseButton
     ui->startButton->setEnabled(false);
     ui->pauseButton->setEnabled(false);
+    ui->pauseButton->setVisible(false);
+
+    ui->comboBox->addItem("A", 0);
+    ui->comboBox->addItem("B", 1);
     mp_MessageDlg = new MainMenu::CMessageDlg(this);
 
     CONNECTSIGNALSLOT(ui->programRunningPanel, AbortClicked(int), this, OnButtonClicked(int));
@@ -214,8 +221,9 @@ void CProgramPanelWidget::OnButtonClicked(int whichBtn)
 {
     ui->favoriteProgramsPanel->SetInFavProgramButtonClicked();
 
-    if ( whichBtn == Dashboard::firstButton ) {
-        ui->startButton->setEnabled(false);//protect to click twice in a short time
+   m_RetortNumber = ui->comboBox->currentData().toInt();
+        if(whichBtn == Dashboard::firstButton){
+            ui->startButton->setEnabled(false);//protect to click twice in a short time
 
         switch(m_ProgramNextAction)
         {      
@@ -231,7 +239,7 @@ void CProgramPanelWidget::OnButtonClicked(int whichBtn)
                 if(CheckPreConditionsToAbortProgram()) {
                     ui->pauseButton->setEnabled(false);
                     ui->programRunningPanel->EnableProgramDetailButton(false);
-                    mp_DataConnector->SendProgramAction(m_SelectedProgramId, DataManager::PROGRAM_ABORT);
+                    mp_DataConnector->SendProgramAction(m_RetortNumber, m_SelectedProgramId, DataManager::PROGRAM_ABORT);
                     m_ProgramNextAction = DataManager::PROGRAM_START;
 
                 }
@@ -243,12 +251,13 @@ void CProgramPanelWidget::OnButtonClicked(int whichBtn)
             break;
         }
     }
-    else if (whichBtn == Dashboard::secondButton)//pause
+  
+    else if(whichBtn == Dashboard::secondButton)
     {
         ui->pauseButton->setEnabled(false);//protect to click twice in a short time
         if(CheckPreConditionsToPauseProgram())
         {
-            mp_DataConnector->SendProgramAction(m_SelectedProgramId, DataManager::PROGRAM_PAUSE);
+            mp_DataConnector->SendProgramAction(m_RetortNumber, m_SelectedProgramId, DataManager::PROGRAM_PAUSE);
         } else {
             // Take Necessary Action
         }

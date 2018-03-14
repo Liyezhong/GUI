@@ -312,6 +312,8 @@ public:
       */
      /****************************************************************************/
      void ResetInFavProgramButtonClicked();
+
+     inline int GetRetortId() const{return m_RetortNumber;}
 private slots:
      /****************************************************************************/
      /*!
@@ -428,6 +430,8 @@ private:
     bool m_pauseButtonDisabledAsSysError;
     bool m_ProgramStartReady;
     bool m_bWaitRotaryValveHeatingPrompt;
+
+    int m_RetortNumber;
 };
 
 }// end namespace Dashboard
