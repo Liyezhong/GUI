@@ -1613,17 +1613,17 @@ void CDataConnector::SendSelectedDayRunLogFile(const QString &FileName)
     mp_WaitDialog->show();
 }
 
-void CDataConnector::SendProgramAction(int retortId, const QString& ProgramID,
+void CDataConnector::SendProgramAction(const QString& retortName, const QString& ProgramID,
                                        DataManager::ProgramActionType_t ActionType,
                                        int delayTime, int runDuration, const QString& reagentExpiredFlag)
 {
-    MsgClasses::CmdProgramAction Command(retortId, COMMAND_TIME_OUT, ProgramID, ActionType, delayTime, runDuration, reagentExpiredFlag);
+    MsgClasses::CmdProgramAction Command(retortName, COMMAND_TIME_OUT, ProgramID, ActionType, delayTime, runDuration, reagentExpiredFlag);
     (void)m_NetworkObject.SendCmdToMaster(Command, &CDataConnector::OnAckTwoPhase, this);
 }
 
-void CDataConnector::SendProgramSelected(int retortId, const QString& ProgramID, int ParaffinStepIndex)
+void CDataConnector::SendProgramSelected(const QString& retortName, const QString& ProgramID, int ParaffinStepIndex)
 {
-    MsgClasses::CmdProgramSelected Command(COMMAND_TIME_OUT, retortId, ProgramID, ParaffinStepIndex);
+    MsgClasses::CmdProgramSelected Command(retortName, COMMAND_TIME_OUT, ProgramID, ParaffinStepIndex);
     (void)m_NetworkObject.SendCmdToMaster(Command, &CDataConnector::OnAckTwoPhase, this);
 }
 

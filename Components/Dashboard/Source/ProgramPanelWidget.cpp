@@ -29,7 +29,7 @@ CProgramPanelWidget::CProgramPanelWidget(QWidget *p) :
     m_pauseButtonDisabledAsSysError(false),
     m_ProgramStartReady(false),
     m_bWaitRotaryValveHeatingPrompt(false),
-    m_RetortNumber(0)
+    m_RetortNumber("0")
 {
     ui->setupUi(GetContentFrame());
     SetPanelTitle(tr("Programs"));
@@ -221,7 +221,7 @@ void CProgramPanelWidget::OnButtonClicked(int whichBtn)
 {
     ui->favoriteProgramsPanel->SetInFavProgramButtonClicked();
 
-   m_RetortNumber = ui->comboBox->currentData().toInt();
+   m_RetortNumber = ui->comboBox->currentData().toString();
         if(whichBtn == Dashboard::firstButton){
             ui->startButton->setEnabled(false);//protect to click twice in a short time
 

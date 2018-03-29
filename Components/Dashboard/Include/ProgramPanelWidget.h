@@ -313,7 +313,7 @@ public:
      /****************************************************************************/
      void ResetInFavProgramButtonClicked();
 
-     inline int GetRetortId() const{return m_RetortNumber;}
+     inline QString GetRetortId() const{return m_RetortNumber;}
 private slots:
      /****************************************************************************/
      /*!
@@ -431,7 +431,7 @@ private:
     bool m_ProgramStartReady;
     bool m_bWaitRotaryValveHeatingPrompt;
 
-    int m_RetortNumber;
+    QString m_RetortNumber;
 };
 
 }// end namespace Dashboard

@@ -311,7 +311,7 @@ public slots:
      *  \param  reagentExpiredFlag = the flag of expired reagent.
      */
     /****************************************************************************/
-    void SendProgramAction(int retortId, const QString& ProgramID, DataManager::ProgramActionType_t ActionType,
+    void SendProgramAction(const QString& retortName, const QString& ProgramID, DataManager::ProgramActionType_t ActionType,
                            int delayTime = 0, int runDuration = 0, const QString& reagentExpiredFlag = "");
     /****************************************************************************/
     /*!
@@ -328,7 +328,7 @@ public slots:
      *  \param ParaffinStepIndex = the first used paraffin step
      */
     /****************************************************************************/
-    void SendProgramSelected(int retortId, const QString& ProgramID, int ParaffinStepIndex);
+    void SendProgramSelected(const QString& retortName, const QString& ProgramID, int ParaffinStepIndex);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of SendUserLevel
