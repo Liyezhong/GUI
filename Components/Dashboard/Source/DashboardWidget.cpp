@@ -91,7 +91,7 @@ CDashboardWidget::CDashboardWidget(Core::CDataConnector *p_DataConnector,
     CONNECTSIGNALSIGNAL(this, AddItemsToFavoritePanel(bool), ui->programPanelWidget, AddItemsToFavoritePanel(bool));
     CONNECTSIGNALSIGNAL(this, UpdateItemsToFavoritePanel(), ui->programPanelWidget, AddItemsToFavoritePanel());
 
-    CONNECTSIGNALSLOT(ui->programPanelWidget, PrepareSelectedProgramChecking(const QString&), this, PrepareSelectedProgramChecking(const QString&));
+    CONNECTSIGNALSLOT(ui->programPanelWidget, PrepareSelectedProgramChecking(const QString&, const QString&), this, PrepareSelectedProgramChecking(const QString&,const QString&));
     CONNECTSIGNALSLOT(mp_DataConnector, ProgramSelectedReply(const MsgClasses::CmdProgramSelectedReply &),
                       this, OnProgramSelectedReply(const MsgClasses::CmdProgramSelectedReply&));
 
@@ -1048,15 +1048,15 @@ bool CDashboardWidget::IsOKPreConditionsToRunProgram(QString& reagentExpiredFlag
         return false;
     }
 
-    if (!m_bRetortLocked){
-        messageDlg.SetIcon(QMessageBox::Warning);
-        messageDlg.SetTitle(CommonString::strWarning);
-        messageDlg.SetText(m_strRetortNotLock);
-        messageDlg.SetButtonText(1, CommonString::strOK);
-        messageDlg.HideButtons();
-        if (messageDlg.exec())
-        return false;
-    }
+//    if (!m_bRetortLocked){
+//        messageDlg.SetIcon(QMessageBox::Warning);
+//        messageDlg.SetTitle(CommonString::strWarning);
+//        messageDlg.SetText(m_strRetortNotLock);
+//        messageDlg.SetButtonText(1, CommonString::strOK);
+//        messageDlg.HideButtons();
+//        if (messageDlg.exec())
+//        return false;
+//    }
 
     const DataManager::CProgram* pSelectedProgram = mp_ProgramList->GetProgram(m_SelectedProgramId);
     Q_ASSERT(pSelectedProgram);
@@ -1295,7 +1295,7 @@ void CDashboardWidget::CheckPreConditionsToRunProgram()
         int EndTimeDelta = m_AsapEndDateTime.secsTo(m_EndDateTime);
         int delayTime = EndTimeDelta + m_TimeDelta;
         int runDuration = Global::AdjustedTime::Instance().GetCurrentDateTime().secsTo(m_EndDateTime);
-        mp_DataConnector->SendProgramAction(0, m_SelectedProgramId, DataManager::PROGRAM_START, delayTime, runDuration, reagentExpiredFlag);
+        mp_DataConnector->SendProgramAction(ui->programPanelWidget->GetSelectedRetort(), m_SelectedProgramId, DataManager::PROGRAM_START, delayTime, runDuration, reagentExpiredFlag);
         ui->programPanelWidget->ChangeStartButtonToStopState();
     }
     else
@@ -1308,12 +1308,12 @@ void CDashboardWidget::CheckPreConditionsToRunProgram()
     }
 }
 
-void CDashboardWidget::PrepareSelectedProgramChecking(const QString& selectedProgramId)
+void CDashboardWidget::PrepareSelectedProgramChecking(const QString& retortId,const QString& selectedProgramId)
 {
     m_NewSelectedProgramId = selectedProgramId;
     (void)this->IsParaffinInProgram(mp_ProgramList->GetProgram(selectedProgramId));//to get m_ParaffinStepIndex
     //Notify Master, to get the time costed for paraffin Melting
-    mp_DataConnector->SendProgramSelected(0, selectedProgramId, m_ParaffinStepIndex);
+    mp_DataConnector->SendProgramSelected(retortId, selectedProgramId, m_ParaffinStepIndex);
 }
 
 void CDashboardWidget::OnRecoveryFromPowerFailure(const MsgClasses::CmdRecoveryFromPowerFailure& cmd)
@@ -1361,6 +1361,8 @@ void CDashboardWidget::OnProgramSelectedReply(const MsgClasses::CmdProgramSelect
     m_CostedTimeBeforeParaffin = cmd.CostedTimeBeforeParaffin();
     m_iWhichStepHasNoSafeReagent = cmd.WhichStepHasNoSafeReagent();
     m_ParaffinHeatingDuration = cmd.GetSecondsForMeltingParaffin();
+    auto retort = cmd.GetRetortName();
+
     bool bCanotRun = true;
     m_TimeDelta = 0;
     int asapEndTime = GetASAPTime(cmd.TimeProposed(),

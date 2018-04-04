@@ -211,7 +211,7 @@ signals:
      *  \param bCheckEndDatetimeAgain = whether check end datetime again or not
      */
     /****************************************************************************/
-    void PrepareSelectedProgramChecking(const QString& selectedProgramId, bool bCheckEndDatetimeAgain = false);
+    void PrepareSelectedProgramChecking(const QString& retortName, const QString& selectedProgramId, bool bCheckEndDatetimeAgain = false);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal OnSelectEndDateTime
@@ -313,7 +313,7 @@ public:
      /****************************************************************************/
      void ResetInFavProgramButtonClicked();
 
-     inline QString GetRetortId() const{return m_RetortNumber;}
+     QString GetSelectedRetort()const {return m_SelectedRetort;}
 private slots:
      /****************************************************************************/
      /*!
@@ -374,6 +374,8 @@ private slots:
     /****************************************************************************/
     void OnPrepareSelectedProgramChecking(const QString&);
 
+    void OnComboBoxIndexChanged(int);
+
 private:
     /****************************************************************************/
     /*!
@@ -431,7 +433,8 @@ private:
     bool m_ProgramStartReady;
     bool m_bWaitRotaryValveHeatingPrompt;
 
-    QString m_RetortNumber;
+    QMap<QString, QPair<QString, QString>> m_RetortProgram; // retort, selected program, confirmed program
+    QString m_SelectedRetort;
 };
 
 }// end namespace Dashboard

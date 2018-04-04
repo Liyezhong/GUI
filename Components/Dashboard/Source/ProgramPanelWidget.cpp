@@ -28,16 +28,18 @@ CProgramPanelWidget::CProgramPanelWidget(QWidget *p) :
     m_startButtonDisabledAsSysError(false),
     m_pauseButtonDisabledAsSysError(false),
     m_ProgramStartReady(false),
-    m_bWaitRotaryValveHeatingPrompt(false),
-    m_RetortNumber("0")
+    m_bWaitRotaryValveHeatingPrompt(false)
 {
+    m_RetortProgram.clear();
+    m_RetortProgram.insert("Retort_A", QPair<QString, QString>("", ""));
+    m_RetortProgram.insert("Retort_B", QPair<QString, QString>("", ""));
     ui->setupUi(GetContentFrame());
     SetPanelTitle(tr("Programs"));
     CONNECTSIGNALSLOT(this, ResetFocus(bool), ui->favoriteProgramsPanel, OnResetFocus(bool));
     CONNECTSIGNALSLOT(this, AddItemsToFavoritePanel(bool), ui->favoriteProgramsPanel, AddItemsToFavoritePanel(bool));
     CONNECTSIGNALSLOT(this, AddItemsToFavoritePanel(), ui->favoriteProgramsPanel, AddItemsToFavoritePanel());
 
-    CONNECTSIGNALSIGNAL(ui->favoriteProgramsPanel, PrepareSelectedProgramChecking(const QString&), this, PrepareSelectedProgramChecking(const QString&));
+//    CONNECTSIGNALSIGNAL(ui->favoriteProgramsPanel, PrepareSelectedProgramChecking(const QString&), this, PrepareSelectedProgramChecking(const QString&));
     CONNECTSIGNALSLOT(ui->favoriteProgramsPanel, PrepareSelectedProgramChecking(const QString&), this, OnPrepareSelectedProgramChecking(const QString&));
 
     CONNECTSIGNALSLOT(this, OnSelectEndDateTime(const QDateTime&),
@@ -70,23 +72,33 @@ CProgramPanelWidget::CProgramPanelWidget(QWidget *p) :
     CONNECTSIGNALSLOT(this, CurrentProgramStepInforUpdated(const MsgClasses::CmdCurrentProgramStepInfor &),
                       ui->programRunningPanel, OnCurrentProgramStepInforUpdated(const MsgClasses::CmdCurrentProgramStepInfor &));
 
+
     m_btnGroup.addButton(ui->startButton, Dashboard::firstButton);
     m_btnGroup.addButton(ui->pauseButton, Dashboard::secondButton);
 
     CONNECTSIGNALSLOT(&m_btnGroup, buttonClicked(int), this, OnButtonClicked(int));
+    CONNECTSIGNALSLOT(ui->comboBox, currentIndexChanged(int), this, OnComboBoxIndexChanged(int));
 
     //todo: enable pauseButton
     ui->startButton->setEnabled(false);
     ui->pauseButton->setEnabled(false);
     ui->pauseButton->setVisible(false);
 
-    ui->comboBox->addItem("A", 0);
-    ui->comboBox->addItem("B", 1);
+    auto index = 0;
+    for(auto iter = m_RetortProgram.keyBegin(); iter != m_RetortProgram.keyEnd(); iter++)
+    {
+        ui->comboBox->addItem((*iter), index++);
+    }
+
+    ui->comboBox->setCurrentIndex(0);
+    m_SelectedRetort = ui->comboBox->itemText(0);
+
     mp_MessageDlg = new MainMenu::CMessageDlg(this);
 
     CONNECTSIGNALSLOT(ui->programRunningPanel, AbortClicked(int), this, OnButtonClicked(int));
 
     CONNECTSIGNALSLOT(this, UpdateProgram(DataManager::CProgram&), ui->favoriteProgramsPanel, UpdateProgram(DataManager::CProgram&));
+
 }
 
 CProgramPanelWidget::~CProgramPanelWidget()
@@ -184,7 +196,14 @@ void CProgramPanelWidget::OnProgramSelected(QString& ProgramId, int asapEndTime,
                                             QList<QString>& selectedStationList)
 {
     Q_UNUSED(bIsFirstStepFixation);
+
+    m_RetortProgram[m_SelectedRetort].second = ProgramId;
     m_SelectedProgramId = ProgramId;
+    if(m_RetortProgram[m_SelectedRetort].first == m_RetortProgram[m_SelectedRetort].second)
+    {
+        ProgramStartReady(true);
+    }
+
     m_EndDateTime = Global::AdjustedTime::Instance().GetCurrentDateTime().addSecs(asapEndTime);
 
     if (m_ProgramNextAction != DataManager::PROGRAM_START)
@@ -221,7 +240,7 @@ void CProgramPanelWidget::OnButtonClicked(int whichBtn)
 {
     ui->favoriteProgramsPanel->SetInFavProgramButtonClicked();
 
-   m_RetortNumber = ui->comboBox->currentData().toString();
+    auto retortName = ui->comboBox->currentText();
         if(whichBtn == Dashboard::firstButton){
             ui->startButton->setEnabled(false);//protect to click twice in a short time
 
@@ -239,7 +258,8 @@ void CProgramPanelWidget::OnButtonClicked(int whichBtn)
                 if(CheckPreConditionsToAbortProgram()) {
                     ui->pauseButton->setEnabled(false);
                     ui->programRunningPanel->EnableProgramDetailButton(false);
-                    mp_DataConnector->SendProgramAction(m_RetortNumber, m_SelectedProgramId, DataManager::PROGRAM_ABORT);
+                    m_SelectedProgramId = m_RetortProgram[retortName].second;
+                    mp_DataConnector->SendProgramAction(m_SelectedRetort, m_SelectedProgramId, DataManager::PROGRAM_ABORT);
                     m_ProgramNextAction = DataManager::PROGRAM_START;
 
                 }
@@ -257,7 +277,8 @@ void CProgramPanelWidget::OnButtonClicked(int whichBtn)
         ui->pauseButton->setEnabled(false);//protect to click twice in a short time
         if(CheckPreConditionsToPauseProgram())
         {
-            mp_DataConnector->SendProgramAction(m_RetortNumber, m_SelectedProgramId, DataManager::PROGRAM_PAUSE);
+            m_SelectedProgramId = m_RetortProgram[retortName].second;
+            mp_DataConnector->SendProgramAction(retortName, m_SelectedProgramId, DataManager::PROGRAM_PAUSE);
         } else {
             // Take Necessary Action
         }
@@ -429,9 +450,18 @@ void CProgramPanelWidget::OnUpdatePanelProgram()
         EnableStartButton(false);
 }
 
-void CProgramPanelWidget::OnPrepareSelectedProgramChecking(const QString&)
+void CProgramPanelWidget::OnPrepareSelectedProgramChecking(const QString& programId)
 {
     ui->startButton->setEnabled(false);
+
+    m_RetortProgram[m_SelectedRetort].first = programId;
+    emit PrepareSelectedProgramChecking(m_SelectedRetort, programId);
+}
+
+void CProgramPanelWidget::OnComboBoxIndexChanged(int index)
+{
+    m_SelectedRetort = ui->comboBox->itemText(index);
+    SwitchToFavoritePanel();
 }
 
 void CProgramPanelWidget::ResetInFavProgramButtonClicked()

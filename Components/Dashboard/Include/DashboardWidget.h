@@ -228,6 +228,7 @@ private:
     QString m_strReadyStartProgram;
     bool m_ShowReadyStartPrompt;
     QString m_checkMachinePrompt;
+
 public slots:
     /****************************************************************************/
     /*!
@@ -243,7 +244,7 @@ public slots:
     void OnOvenCoverClosed(bool closed);
 
 private slots:
-    void PrepareSelectedProgramChecking(const QString& selectedProgramId);
+    void PrepareSelectedProgramChecking(const QString& retortName, const QString& selectedProgramId);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnProgramSelectedReply
