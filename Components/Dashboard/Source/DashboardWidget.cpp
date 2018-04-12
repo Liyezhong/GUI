@@ -345,7 +345,7 @@ void CDashboardWidget::OnProgramWillComplete()
         //Resume EndTime countdown
         emit ProgramActionStarted(DataManager::PROGRAM_START, 0, Global::AdjustedTime::Instance().GetCurrentDateTime(), true);
 
-        mp_DataConnector->SendProgramAction(0, m_SelectedProgramId, DataManager::PROGRAM_DRAIN);
+        mp_DataConnector->SendProgramAction(ui->programPanelWidget->GetSelectedRetort(), m_SelectedProgramId, DataManager::PROGRAM_DRAIN);
         //disable pause and abort
         ui->programPanelWidget->EnableStartButton(false);
         ui->programPanelWidget->EnablePauseButton(false);
@@ -384,7 +384,7 @@ void CDashboardWidget::OnTissueProtectPassed(bool flag)
 
     if (mp_TissueProtectPassedMsgDlg->exec())
     {
-        mp_DataConnector->SendProgramAction(0, m_SelectedProgramId, DataManager::PROGRAM_DRAIN_SR);
+        mp_DataConnector->SendProgramAction(ui->programPanelWidget->GetSelectedRetort(), m_SelectedProgramId, DataManager::PROGRAM_DRAIN_SR);
         delete mp_TissueProtectPassedMsgDlg;
         mp_TissueProtectPassedMsgDlg = NULL;
         return;
@@ -413,7 +413,7 @@ void CDashboardWidget::OnOvenCoverOpen()
     mp_OvenLidOpenMsgDlg->HideButtons();
     if (mp_OvenLidOpenMsgDlg->exec())
     {
-        mp_DataConnector->SendProgramAction(0, m_SelectedProgramId, DataManager::PROGRAM_OVEN_COVER_OPEN);
+        mp_DataConnector->SendProgramAction(ui->programPanelWidget->GetSelectedRetort(), m_SelectedProgramId, DataManager::PROGRAM_OVEN_COVER_OPEN);
         delete mp_OvenLidOpenMsgDlg;
         mp_OvenLidOpenMsgDlg = NULL;
         return;
@@ -445,7 +445,7 @@ void CDashboardWidget::OnRetortCoverOpen()
 
     if (mp_RetortLidOpenMsgDlg->exec())
     {
-        mp_DataConnector->SendProgramAction(0, m_SelectedProgramId, DataManager::PROGRAM_RETORT_COVER_OPEN);
+        mp_DataConnector->SendProgramAction(ui->programPanelWidget->GetSelectedRetort(), m_SelectedProgramId, DataManager::PROGRAM_RETORT_COVER_OPEN);
         delete mp_RetortLidOpenMsgDlg;
         mp_RetortLidOpenMsgDlg = NULL;
         return;
@@ -466,7 +466,7 @@ void CDashboardWidget::OnPowerFailureMsg()
 
     if (messageDlg.exec())
     {
-        mp_DataConnector->SendProgramAction(0, m_SelectedProgramId, DataManager::PROGRAM_POWER_FAILURE_MSG);
+        mp_DataConnector->SendProgramAction(ui->programPanelWidget->GetSelectedRetort(), m_SelectedProgramId, DataManager::PROGRAM_POWER_FAILURE_MSG);
         return;
     }
 }
@@ -1284,7 +1284,7 @@ void CDashboardWidget::CheckPreConditionsToRunProgram()
         }
 
 
-        mp_DataConnector->SendProgramAction(0, "", DataManager::PROGRAM_START, 0, 0);
+        mp_DataConnector->SendProgramAction(ui->programPanelWidget->GetSelectedRetort(), "", DataManager::PROGRAM_START, 0, 0);
         ui->programPanelWidget->ChangeStartButtonToStopState();
         return;
     }
@@ -1361,7 +1361,9 @@ void CDashboardWidget::OnProgramSelectedReply(const MsgClasses::CmdProgramSelect
     m_CostedTimeBeforeParaffin = cmd.CostedTimeBeforeParaffin();
     m_iWhichStepHasNoSafeReagent = cmd.WhichStepHasNoSafeReagent();
     m_ParaffinHeatingDuration = cmd.GetSecondsForMeltingParaffin();
-    auto retort = cmd.GetRetortName();
+    //QString retort = cmd.GetRetortID();
+
+    //qDebug()<<"******* on program selected reply:"<<retort;
 
     bool bCanotRun = true;
     m_TimeDelta = 0;
