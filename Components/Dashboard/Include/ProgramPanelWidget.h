@@ -213,6 +213,14 @@ public slots:
      */
     /****************************************************************************/
     void OnProgramActionStopped(DataManager::ProgramStatusType_t ProgramStatusType);
+
+    /****************************************************************************/
+    /*!
+     *  \brief  Definition/Declaration of OnProgramActionStarted
+     */
+    /****************************************************************************/
+    void OnProgramActionStarted(DataManager::ProgramActionType_t ProgramActionType, int remainingTimeTotal,
+                                const QDateTime& startDateTime, bool IsResume);//in seconds
 signals:
     /****************************************************************************/
     /*!
@@ -250,16 +258,6 @@ signals:
                          bool bIsFirstStepFixation, QList<QString>& selectedStationList,
                          int firstProgramStepIndex);
 
-    /****************************************************************************/
-    /*!
-     *  \brief  Definition/Declaration of signal ProgramActionStarted
-     *  \param  programActionType = program operation type
-     *  \param  remainingTimeTotal = the total program remaining time\
-     *  \param  startDateTime = the program start datetime
-     *  \param  IsResume = is first time to press "Start", or resume to run program
-     */
-    /****************************************************************************/
-    void ProgramActionStarted(DataManager::ProgramActionType_t programActionType, int remainingTimeTotal, const QDateTime& startDateTime, bool IsResume);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal CurrentProgramStepInforUpdated
@@ -356,14 +354,6 @@ private slots:
     /****************************************************************************/
     void OnProgramSelected(QString& ProgramId, int asapEndTime,
                            bool bIsFirstStepFixation, QList<QString>& selectedStationList);
-
-    /****************************************************************************/
-    /*!
-     *  \brief  Definition/Declaration of OnProgramActionStarted
-     */
-    /****************************************************************************/
-    void OnProgramActionStarted(DataManager::ProgramActionType_t ProgramActionType, int remainingTimeTotal,
-                                const QDateTime& startDateTime, bool IsResume);//in seconds
 
     /****************************************************************************/
     /*!

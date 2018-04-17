@@ -341,7 +341,7 @@ void CDashboardWidget::OnProgramWillComplete(const QString& RetortID)
 
     mp_ProgramWillCompleteMsgDlg = new MainMenu::CMessageDlg(this);
     mp_ProgramWillCompleteMsgDlg->SetIcon(QMessageBox::Information);
-    mp_ProgramWillCompleteMsgDlg->SetTitle(CommonString::strConfirmMsg);
+    mp_ProgramWillCompleteMsgDlg->SetTitle(CommonString::strConfirmMsg + "-" + RetortID);
     QString strTemp(m_strProgramWillComplete);
     strTemp = strTemp.arg(CFavoriteProgramsPanelWidget::SELECTED_PROGRAM_NAME);
     mp_ProgramWillCompleteMsgDlg->SetText(strTemp);
@@ -356,16 +356,12 @@ void CDashboardWidget::OnProgramWillComplete(const QString& RetortID)
         m_IsDrainingWhenPrgrmCompleted = true;
 
         //Resume EndTime countdown
-        emit ProgramActionStarted(RetortID, DataManager::PROGRAM_START, 0, Global::AdjustedTime::Instance().GetCurrentDateTime(), true);
+        pProgramPanel->OnProgramActionStarted(DataManager::PROGRAM_START, 0, Global::AdjustedTime::Instance().GetCurrentDateTime(), true);
 
         mp_DataConnector->SendProgramAction(RetortID, m_SelectedProgramId, DataManager::PROGRAM_DRAIN);
         //disable pause and abort    
         pProgramPanel->EnableStartButton(false);
         pProgramPanel->EnablePauseButton(false);
-
-        delete mp_ProgramWillCompleteMsgDlg;
-        mp_ProgramWillCompleteMsgDlg = NULL;
-        return;
     }
     delete mp_ProgramWillCompleteMsgDlg;
     mp_ProgramWillCompleteMsgDlg = NULL;
@@ -817,7 +813,7 @@ void CDashboardWidget::OnProgramCompleted(const QString& RetortID, DataManager::
     mp_RemoveSpecimenWhenCompletedDlg->HideButtons();
     if (!m_SelectedProgramId.isEmpty() && m_SelectedProgramId.at(0) == 'C')
     {
-        mp_RemoveSpecimenWhenCompletedDlg->SetTitle(CommonString::strInforMsg);
+        mp_RemoveSpecimenWhenCompletedDlg->SetTitle(CommonString::strInforMsg + "-" + RetortID);
         mp_RemoveSpecimenWhenCompletedDlg->SetText(strTemp);
         m_ShowReadyStartPrompt = true;
         (void)mp_RemoveSpecimenWhenCompletedDlg->exec();
@@ -825,7 +821,7 @@ void CDashboardWidget::OnProgramCompleted(const QString& RetortID, DataManager::
     }
     else if (!IsRetortContaminated && (!m_SelectedProgramId.isEmpty() && m_SelectedProgramId.at(0) != 'C'))
     {
-        mp_RemoveSpecimenWhenCompletedDlg->SetTitle(CommonString::strConfirmMsg);
+        mp_RemoveSpecimenWhenCompletedDlg->SetTitle(CommonString::strConfirmMsg + "-" + RetortID);
         mp_RemoveSpecimenWhenCompletedDlg->SetText(strTemp + " " + m_strTakeOutSpecimen);
 #if defined(__arm__)
         mp_RemoveSpecimenWhenCompletedDlg->EnableButton(1, false);
@@ -881,8 +877,7 @@ void CDashboardWidget::OnProgramRunBegin(const QString& RetortID)
     }
     QDateTime curDateTime = Global::AdjustedTime::Instance().GetCurrentDateTime();
     int remainingTime = curDateTime.secsTo(m_EndDateTime);
-    //emit ProgramActionStarted(RetortID, DataManager::PROGRAM_START, remainingTime, curDateTime, isResumeRun);
-    pProgramPanel->ProgramActionStarted(DataManager::PROGRAM_START, remainingTime, curDateTime, isResumeRun);
+    pProgramPanel->OnProgramActionStarted(DataManager::PROGRAM_START, remainingTime, curDateTime, isResumeRun);
 
     if (m_SelectedProgramId.at(0) == 'C')
     {

@@ -61,11 +61,11 @@ CProgramPanelWidget::CProgramPanelWidget(QWidget *p) :
 //                        this, OnProgramActionStopped(DataManager::ProgramStatusType_t));
 
 
-    CONNECTSIGNALSLOT(this, ProgramActionStarted(DataManager::ProgramActionType_t, int, const QDateTime&, bool),
-                      ui->programRunningPanel, OnProgramActionStarted(DataManager::ProgramActionType_t, int, const QDateTime&, bool));
+//    CONNECTSIGNALSLOT(this, ProgramActionStarted(DataManager::ProgramActionType_t, int, const QDateTime&, bool),
+//                      ui->programRunningPanel, OnProgramActionStarted(DataManager::ProgramActionType_t, int, const QDateTime&, bool));
 
-    CONNECTSIGNALSLOT(this, ProgramActionStarted(DataManager::ProgramActionType_t, int, const QDateTime&, bool),
-                      this, OnProgramActionStarted(DataManager::ProgramActionType_t, int, const QDateTime&, bool));
+//    CONNECTSIGNALSLOT(this, ProgramActionStarted(DataManager::ProgramActionType_t, int, const QDateTime&, bool),
+//                      this, OnProgramActionStarted(DataManager::ProgramActionType_t, int, const QDateTime&, bool));
 
     CONNECTSIGNALSLOT(this, CurrentProgramStepInforUpdated(const MsgClasses::CmdCurrentProgramStepInfor &),
                       ui->programRunningPanel, OnCurrentProgramStepInforUpdated(const MsgClasses::CmdCurrentProgramStepInfor &));
@@ -361,8 +361,7 @@ void CProgramPanelWidget::OnWaitRotaryValveHeatingPrompt()
 void CProgramPanelWidget::OnProgramActionStarted(DataManager::ProgramActionType_t ProgramActionType,
                                                      int remainingTimeTotal, const QDateTime& startDateTime, bool IsResume)
 {
-    Q_UNUSED(remainingTimeTotal);
-    Q_UNUSED(startDateTime);
+    ui->programRunningPanel->OnProgramActionStarted(ProgramActionType, remainingTimeTotal, startDateTime, IsResume);
     if (DataManager::PROGRAM_START== ProgramActionType)
     {
         if (m_SelectedProgramId.at(0) == 'C')
