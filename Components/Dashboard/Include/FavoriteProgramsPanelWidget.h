@@ -65,7 +65,7 @@ namespace Dashboard {
          *  \return from SetPtrToMainWindow
          */
         /****************************************************************************/
-        void SetPtrToMainWindow(MainMenu::CMainWindow *p_MainWindow, Core::CDataConnector *p_DataConnector);
+        void SetPtrToMainWindow(MainMenu::CMainWindow *p_MainWindow, Core::CDataConnector *p_DataConnector, const QString& RetortID);
         /****************************************************************************/
         /*!
          *  \brief  Definition/Declaration of function ResetInFavProgramButtonClicked
@@ -83,6 +83,8 @@ namespace Dashboard {
         /****************************************************************************/
         void SetInFavProgramButtonClicked();
         static QString SELECTED_PROGRAM_NAME;       ///<  Definition/Declaration of variable SELECTED_PROGRAM_NAME
+
+        const QString& GetRetortID() {return m_RetortID;}
 
     public slots:
         /****************************************************************************/
@@ -143,7 +145,7 @@ namespace Dashboard {
          *  \param selectedProgramId = the selected program id
          */
         /****************************************************************************/
-        void PrepareSelectedProgramChecking(const QString& selectedProgramId);
+        void PrepareSelectedProgramChecking(const QString& RetortID, const QString& selectedProgramId);
         /****************************************************************************/
         /*!
          *  \brief  Definition/Declaration of signal OnSelectEndDateTime
@@ -192,6 +194,7 @@ namespace Dashboard {
         QDateTime m_EndDateTime;       ///<  Definition/Declaration of variable m_EndDateTime
         bool m_OnlyAddCleaningProgram;
         bool m_IsInFavProgramButtonClicked;
+        QString m_RetortID;
 
     };
 }

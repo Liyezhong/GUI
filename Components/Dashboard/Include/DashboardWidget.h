@@ -42,7 +42,7 @@ namespace Ui {
 }
 
 class CDashboardDateTimeWidget;
-
+class CProgramPanelWidget;
 
 /****************************************************************************/
 /*!
@@ -152,6 +152,15 @@ private:
     void RetranslateUI();
     void SetCassetteNumber();
     bool IsOKPreConditionsToRunProgram(QString& reagentExpiredFlag);
+    /****************************************************************************/
+    /*!
+     *  \brief  Definition/Declaration of function SwitchToFavoritePanel
+     */
+    /****************************************************************************/
+    void SwitchToFavoritePanel(const QString& RetortID);
+
+    CProgramPanelWidget* GetPanelWidget(const QString RetortID);
+
     Ui::CDashboardWidget *ui;       ///<  Definition/Declaration of variable ui
     Core::CDataConnector *mp_DataConnector;          //!< Data object
     MainMenu::CMainWindow *mp_MainWindow;           //!< Reference to main window.
@@ -264,38 +273,38 @@ private slots:
      *  \brief  Definition/Declaration of OnProgramStartReadyUpdated
      */
     /****************************************************************************/
-    void OnProgramStartReadyUpdated();
+    void OnProgramStartReadyUpdated(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnProgramWillComplete
      */
     /****************************************************************************/
-    void OnProgramWillComplete();
+    void OnProgramWillComplete(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of CancelProgramWillCompletePrompt
      */
     /****************************************************************************/
-    void CancelProgramWillCompletePrompt();
+    void CancelProgramWillCompletePrompt(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of CancelTissueProtectPassedPrompt
      */
     /****************************************************************************/
-    void CancelTissueProtectPassedPrompt();
+    void CancelTissueProtectPassedPrompt(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of CancelRetortCoverOpenMessage
      */
     /****************************************************************************/
-    void CancelRetortCoverOpenMessage();
+    void CancelRetortCoverOpenMessage(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnTissueProtectPassed
      *  \param  flag = To indicate if safe reagent is totally passed or passed with warning
      */
     /****************************************************************************/
-    void OnTissueProtectPassed(bool flag);
+    void OnTissueProtectPassed(const QString& RetortID, bool flag);
 
     /****************************************************************************/
     /*!
@@ -309,7 +318,7 @@ private slots:
      *  \brief  Definition/Declaration of OnRetortCoverOpen
      */
     /****************************************************************************/
-    void OnRetortCoverOpen();
+    void OnRetortCoverOpen(const QString& RetortID);
 
     /****************************************************************************/
     /*!
@@ -353,25 +362,25 @@ private slots:
      *  \param  IsRetortContaminated = is retort contaminated?
      */
     /****************************************************************************/
-    void OnProgramAborted(bool IsRetortContaminated);
+    void OnProgramAborted(const QString& RetortID, bool IsRetortContaminated);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnProgramBeginAbort
      */
     /****************************************************************************/
-    void OnProgramBeginAbort();
+    void OnProgramBeginAbort(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Declaration of OnCleanPrgmCompleteAsSafeReagent
      */
     /****************************************************************************/
-    void OnCleanPrgmCompleteAsSafeReagent();
+    void OnCleanPrgmCompleteAsSafeReagent(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnProgramCompleted
      */
     /****************************************************************************/
-    void OnProgramCompleted(DataManager::CompletedProgramType_t completedProgramType
+    void OnProgramCompleted(const QString& RetortID, DataManager::CompletedProgramType_t completedProgramType
                             = DataManager::COMPLETED_PROGRAM_GENERAL,
                             bool IsRetortContaminated = true);
     /****************************************************************************/
@@ -379,31 +388,31 @@ private slots:
      *  \brief  Definition/Declaration of OnProgramRunBegin
      */
     /****************************************************************************/
-    void OnProgramRunBegin();
+    void OnProgramRunBegin(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnProgramPaused
      */
     /****************************************************************************/
-    void OnProgramPaused();
+    void OnProgramPaused(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnPauseButtonEnble
      */
     /****************************************************************************/
-    void OnPauseButtonEnable(bool bEnable);
+    void OnPauseButtonEnable(const QString& RetortID, bool bEnable);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnStartButtonEnable
      */
     /****************************************************************************/
-    void OnStartButtonEnable(bool bEnable);
+    void OnStartButtonEnable(const QString& RetortID, bool bEnable);
     /****************************************************************************/
     /*!
     *  \brief  Definition/Declaration of OnPauseTimeout15Mintues
     */
     /****************************************************************************/
-    void OnPauseTimeout15Mintues();
+    void OnPauseTimeout15Mintues(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnStationSuckDrain
@@ -439,7 +448,7 @@ private slots:
      *  \brief  Definition/Declaration of CheckPreConditionsToRunProgram
      */
     /****************************************************************************/
-    void CheckPreConditionsToRunProgram();
+    void CheckPreConditionsToRunProgram(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of function TakeOutSpecimenAndWaitRunCleaning
@@ -447,7 +456,7 @@ private slots:
      *  \return from TakeOutSpecimenAndWaitRunCleaning
      */
     /****************************************************************************/
-    void TakeOutSpecimenAndWaitRunCleaning(const QString& lastReagentGroupId);
+    void TakeOutSpecimenAndWaitRunCleaning(const QString& retortID, const QString& lastReagentGroupId);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of function OnTimerCheckRetortLid
@@ -462,6 +471,8 @@ private slots:
      */
     /****************************************************************************/
     void OnProgramResumeAfterPowerFailure();
+
+    void OnPreTestDone(const QString& RetortID);
  signals:
     /****************************************************************************/
     /*!
@@ -520,7 +531,7 @@ private slots:
      *  \param IsResume = is resume to run program
      */
     /****************************************************************************/
-    void ProgramActionStarted(DataManager::ProgramActionType_t programActionType, int remainingTimeTotal, const QDateTime& startDateTime, bool IsResume);
+    void ProgramActionStarted(const QString& RetortID, DataManager::ProgramActionType_t programActionType, int remainingTimeTotal, const QDateTime& startDateTime, bool IsResume);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal ProgramActionStopped
@@ -533,12 +544,7 @@ private slots:
      */
     /****************************************************************************/
     void UpdateUserSetting(DataManager::CUserSettings&);
-    /****************************************************************************/
-    /*!
-     *  \brief  Definition/Declaration of signal SwitchToFavoritePanel
-     */
-    /****************************************************************************/
-    void SwitchToFavoritePanel();
+
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal UndoProgramSelection

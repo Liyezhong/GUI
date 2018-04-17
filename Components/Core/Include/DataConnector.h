@@ -612,7 +612,7 @@ signals:
 	 *  \brief  Definition/Declaration of signal ProgramStartReady
 	 */
 	/****************************************************************************/
-	void ProgramStartReady();
+    void ProgramStartReady(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  signal of Program selfTest failed
@@ -630,25 +630,25 @@ signals:
      *  \brief  Definition/Declaration of signal ProgramWillComplete
      */
     /****************************************************************************/
-    void ProgramWillComplete();
+    void ProgramWillComplete(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal CancelProgramWillCompletePrompt
      */
     /****************************************************************************/
-    void CancelProgramWillCompletePrompt();
+    void CancelProgramWillCompletePrompt(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal CancelTissueProtectPassedPrompt
      */
     /****************************************************************************/
-    void CancelTissueProtectPassedPrompt();
+    void CancelTissueProtectPassedPrompt(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal CancelRetortCoverOpenMessagePrompt
      */
     /****************************************************************************/
-    void CancelRetortCoverOpenMessagePrompt();
+    void CancelRetortCoverOpenMessagePrompt(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Declaration of signal ShowMsgDialog
@@ -667,7 +667,7 @@ signals:
      *  \brief  Definition/Declaration of signal TissueProtectPassed
      */
     /****************************************************************************/
-    void TissueProtectPassed(bool);
+    void TissueProtectPassed(const QString& RetortID, bool);
 
     /****************************************************************************/
     /*!
@@ -687,7 +687,7 @@ signals:
      *  \brief  Definition/Declaration of signal RetortCoverOpen
      */
     /****************************************************************************/
-    void RetortCoverOpen();
+    void RetortCoverOpen(const QString& RetortID);
 
     /****************************************************************************/
     /*!
@@ -701,13 +701,13 @@ signals:
      *  \param  IsRetortContaminated = is retort contaminated?
      */
     /****************************************************************************/
-    void ProgramAborted(bool IsRetortContaminated);
+    void ProgramAborted(const QString& RetortID, bool IsRetortContaminated);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal ProgramBeginAbort
      */
     /****************************************************************************/
-    void ProgramBeginAbort();
+    void ProgramBeginAbort(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal ProgramCompleted
@@ -715,33 +715,33 @@ signals:
      *  \param  IsRetortContaminated =  whether Retort is contaminated or not
      */
     /****************************************************************************/
-    void ProgramCompleted(DataManager::CompletedProgramType_t completedProgramType
+    void ProgramCompleted(const QString& RetortID, DataManager::CompletedProgramType_t completedProgramType
                           = DataManager::COMPLETED_PROGRAM_GENERAL, bool IsRetortContaminated = true);
     /****************************************************************************/
     /*!
      *  \brief  Declaration of signal ProgramCompleted
      */
     /****************************************************************************/
-    void CleanPrgmCompleteAsSafeReagent();
+    void CleanPrgmCompleteAsSafeReagent(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal ProgramRunBegin
      */
     /****************************************************************************/
-    void ProgramRunBegin();
+    void ProgramRunBegin(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal ProgramPaused
      */
     /****************************************************************************/
-    void ProgramPaused();
+    void ProgramPaused(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal TakeoutSpecimenWaitRunCleaning
      *  \param lastReagentGroupID = lastReagentGroupID
      */
     /****************************************************************************/
-    void TakeoutSpecimenWaitRunCleaning(const QString& lastReagentGroupID);
+    void TakeoutSpecimenWaitRunCleaning(const QString& RetortID, const QString& lastReagentGroupID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal RetortLockStatusChanged
@@ -816,20 +816,20 @@ signals:
      * \iparam  bEnable enabled/disabled
      */
     /****************************************************************************/
-    void EnablePauseButton(bool bEnable);
+    void EnablePauseButton(const QString& RetortID, bool bEnable);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal EnableStartButton
      * \iparam  bEnable enabled/disabled
      */
     /****************************************************************************/
-    void EnableStartButton(bool bEnable);
+    void EnableStartButton(const QString& RetortID, bool bEnable);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal PauseTimeout15Mintues
      */
     /****************************************************************************/
-    void PauseTimeout15Mintues();
+    void PauseTimeout15Mintues(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal UpdateProgramEndTime
@@ -843,7 +843,7 @@ signals:
      *  \param  enabled = enable/disable the timer for prorgram running status.
      */
     /****************************************************************************/
-    void UpdateProgramTimerStatus(bool enabled);
+    void UpdateProgramTimerStatus(const QString& RetortID, bool enabled);
     /****************************************************************************/
     /*!
      *  \brief  Declaration of signal RecoveryFromPowerFailure, for enter system after power failure
@@ -857,7 +857,7 @@ signals:
      *
      */
     /****************************************************************************/
-    void PreTestDone();
+    void PreTestDone(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal WaitRotaryValveHeatingPrompt

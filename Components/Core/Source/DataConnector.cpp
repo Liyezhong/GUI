@@ -1772,17 +1772,18 @@ void CDataConnector::CurrentProgramStepInfoHandler(Global::tRefType Ref, const M
 void CDataConnector::EnterCleaningProgramHandler(Global::tRefType Ref, const MsgClasses::CmdEnterCleaningProgram& Command)
 {
     m_NetworkObject.SendAckToMaster(Ref, Global::AckOKNOK(true));
-    emit TakeoutSpecimenWaitRunCleaning(Command.LastReagentGroupID());
+    emit TakeoutSpecimenWaitRunCleaning(Command.GetRetortID(), Command.LastReagentGroupID());
 }
 
 void CDataConnector::ProgramAcknowledgeHandler(Global::tRefType Ref, const MsgClasses::CmdProgramAcknowledge& Command)
 {
     m_NetworkObject.SendAckToMaster(Ref, Global::AckOKNOK(true));
+    QString RetortId = Command.GetRetortName();
     switch( Command.AcknownedgeType())
     {
         case DataManager::PROGRAM_READY:
         {
-             emit ProgramStartReady();
+             emit ProgramStartReady(RetortId);
         }
         break;
         case DataManager::PROGRAM_SELFTEST_FAILED:
@@ -1797,105 +1798,105 @@ void CDataConnector::ProgramAcknowledgeHandler(Global::tRefType Ref, const MsgCl
         break;
         case DataManager::PROGRAM_WILL_COMPLETE:
         {
-             emit ProgramWillComplete();
+             emit ProgramWillComplete(RetortId);
         }
         break;
         case DataManager::PROGRAM_ABORT_BEGIN:
         {
-             emit ProgramBeginAbort();
+             emit ProgramBeginAbort(RetortId);
         }
         break;
         case DataManager::PROGRAM_RUN_FINISHED:
         {
-             emit ProgramCompleted();
+             emit ProgramCompleted(RetortId);
         }
         break;
         case DataManager::PROGRAM_RUN_FINISHED_NO_CONTAMINATED:
         {
-            emit ProgramCompleted(DataManager::COMPLETED_PROGRAM_GENERAL, false);
+            emit ProgramCompleted(RetortId, DataManager::COMPLETED_PROGRAM_GENERAL, false);
         }
         break;
         case DataManager::CLEANING_PROGRAM_COMPLETE_AS_SAFE_REAGENT:
         {
-            emit CleanPrgmCompleteAsSafeReagent();
+            emit CleanPrgmCompleteAsSafeReagent(RetortId);
         }
         break;
         case DataManager::PROGRAM_RUN_FINISHED_AS_SAFE_REAGENT:
         {
-            emit ProgramCompleted(DataManager::COMPLETED_PROGRAM_SAFE_REAGENT);
+            emit ProgramCompleted(RetortId, DataManager::COMPLETED_PROGRAM_SAFE_REAGENT);
         }
         break;
         case DataManager::PROGRAM_RUN_FINISHED_AS_SAFE_REAGENT_NO_CONTAMINATED:
         {
-            emit ProgramCompleted(DataManager::COMPLETED_PROGRAM_SAFE_REAGENT, false);
+            emit ProgramCompleted(RetortId, DataManager::COMPLETED_PROGRAM_SAFE_REAGENT, false);
         }
         break;
         case DataManager::PROGRAM_RUN_FINISHED_AS_POWER_FAILURE:
         {
-            emit ProgramCompleted(DataManager::COMPLETED_PROGRAM_POWER_FAILURE);
+            emit ProgramCompleted(RetortId, DataManager::COMPLETED_PROGRAM_POWER_FAILURE);
         }
         break;
         case DataManager::PROGRAM_RUN_FINISHED_AS_POWER_FAILURE_NO_CONTAMINATED:
         {
-            emit ProgramCompleted(DataManager::COMPLETED_PROGRAM_POWER_FAILURE, false);
+            emit ProgramCompleted(RetortId, DataManager::COMPLETED_PROGRAM_POWER_FAILURE, false);
         }
         break;
         case DataManager::PROGRAM_RUN_BEGIN:
         {
-             emit ProgramRunBegin();
+             emit ProgramRunBegin(RetortId);
              (void)mp_MainWindow->SetStatusIcons(MainMenu::CMainWindow::ProcessRunning);
         }
         break;
         case DataManager::PROGRAM_PAUSE_FINISHED:
         {
-            emit ProgramPaused();
+            emit ProgramPaused(RetortId);
             (void)mp_MainWindow->UnsetStatusIcons(MainMenu::CMainWindow::ProcessRunning);
         }
         break;
         case DataManager::PROGRAM_PAUSE_ENABLE:
         {
-            emit EnablePauseButton(true);
+            emit EnablePauseButton(RetortId, true);
         }
         break;
         case DataManager::PROGRAM_PAUSE_DISABLE:
         {
-            emit EnablePauseButton(false);
+            emit EnablePauseButton(RetortId, false);
         }
         break;
         case DataManager::PROGRAM_START_ENABLE:
         {
-            emit EnableStartButton(true);
+            emit EnableStartButton(RetortId, true);
         }
         break;
         case DataManager::PROGRAM_START_DISABLE:
         {
-            emit EnableStartButton(false);
+            emit EnableStartButton(RetortId, false);
         }
         break;
 
         case DataManager::PROGRAM_PAUSE_TIMEOUT_15MINTUES:
         {
-            emit PauseTimeout15Mintues();
+            emit PauseTimeout15Mintues(RetortId);
         }
         break;
         case DataManager::PROGRAM_SYSTEM_EEEOR:
         {
-            emit UpdateProgramTimerStatus(false);
+            emit UpdateProgramTimerStatus(RetortId, false);
         }
         break;
         case DataManager::PROGRAM_SYSTEM_RC_RESTART:
         {
-            emit UpdateProgramTimerStatus(true);
+            emit UpdateProgramTimerStatus(RetortId, true);
         }
         break;
         case DataManager::TISSUE_PROTECT_PASSED:
         {
-            emit TissueProtectPassed(true);
+            emit TissueProtectPassed(RetortId, true);
         }
         break;
         case DataManager::TISSUE_PROTECT_PASSED_WARNING:
         {
-            emit TissueProtectPassed(false);
+            emit TissueProtectPassed(RetortId, false);
         }
         break;
 		case DataManager::OVEN_COVER_OPEN:
@@ -1905,12 +1906,12 @@ void CDataConnector::ProgramAcknowledgeHandler(Global::tRefType Ref, const MsgCl
         break;
         case DataManager::RETORT_COVER_OPERN:
         {
-            emit RetortCoverOpen();
+            emit RetortCoverOpen(RetortId);
         }
         break;
         case DataManager::PROGRAM_PRETEST_DONE:
         {
-            emit PreTestDone();
+            emit PreTestDone(RetortId);
         }
         break;
         case DataManager::POWER_FAILURE_MSG:
@@ -1920,17 +1921,17 @@ void CDataConnector::ProgramAcknowledgeHandler(Global::tRefType Ref, const MsgCl
         break;
         case DataManager::CANCEL_PROGRAM_WILL_COMPLETE_PROMPT:
         {
-            emit CancelProgramWillCompletePrompt();
+            emit CancelProgramWillCompletePrompt(RetortId);
         }
         break;
         case DataManager::CANCEL_TISSUE_PROTECT_PASSED_PROMPT:
         {
-            emit CancelTissueProtectPassedPrompt();
+            emit CancelTissueProtectPassedPrompt(RetortId);
         }
         break;
         case DataManager::CANCEL_RETORT_LID_OPEN_MSG_PROMPT:
         {
-            emit CancelRetortCoverOpenMessagePrompt();
+            emit CancelRetortCoverOpenMessagePrompt(RetortId);
         }
         break;
         case DataManager::SHOW_PAUSE_MSG_DLG:
@@ -2017,7 +2018,7 @@ void CDataConnector::ProgramAcknowledgeHandler(Global::tRefType Ref, const MsgCl
 void CDataConnector::ProgramAbortedHandler(Global::tRefType Ref, const MsgClasses::CmdProgramAborted& Command)
 {
     m_NetworkObject.SendAckToMaster(Ref, Global::AckOKNOK(true));
-    emit ProgramAborted(Command.IsRetortContaminated());
+    emit ProgramAborted(Command.GetRetortID(), Command.IsRetortContaminated());
 }
 
 void CDataConnector::ProgramSelectedReplyHandler(Global::tRefType Ref, const MsgClasses::CmdProgramSelectedReply & Command)
@@ -2066,7 +2067,7 @@ void CDataConnector::RecoveryFromPowerFailureHandler(Global::tRefType Ref, const
     m_NetworkObject.SendAckToMaster(Ref, Global::AckOKNOK(true));
     emit RecoveryFromPowerFailure(Command);
     emit ProgramSelfTestFailed();
-    emit ProgramStartReady();
+    emit ProgramStartReady("Retort_A");
     Core::CGlobalHelper::SetErrorHandlingFailed(Command.IsErrorHandlingFailed());
 }
 

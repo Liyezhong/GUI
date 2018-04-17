@@ -22,7 +22,8 @@ CFavoriteProgramsPanelWidget::CFavoriteProgramsPanelWidget(QWidget *p) :
     m_ProcessRunning(false),
     m_LastSelectedButtonId(-1),
     m_OnlyAddCleaningProgram(false),
-    m_IsInFavProgramButtonClicked(false)
+    m_IsInFavProgramButtonClicked(false),
+    m_RetortID("")
 {
     ui->setupUi(this);
     SetButtonGroup();
@@ -63,10 +64,11 @@ void CFavoriteProgramsPanelWidget ::SetButtonGroup()
 }
 
 
-void CFavoriteProgramsPanelWidget::SetPtrToMainWindow(MainMenu::CMainWindow *p_MainWindow, Core::CDataConnector *p_DataConnector)
+void CFavoriteProgramsPanelWidget::SetPtrToMainWindow(MainMenu::CMainWindow *p_MainWindow, Core::CDataConnector *p_DataConnector, const QString& RetortID)
 {
     Q_UNUSED(p_MainWindow);
     mp_DataConnector = p_DataConnector;
+    m_RetortID = RetortID;
 }
 
 void CFavoriteProgramsPanelWidget::UpdateProgram(DataManager::CProgram &Program)
@@ -131,10 +133,11 @@ void CFavoriteProgramsPanelWidget::AddItemsToFavoritePanel(bool bOnlyAddCleaning
             label->setVisible(false);
         }
     }
-
+    qDebug()<<"****************** add favorite program 11111";
     if (!mp_DataConnector)
     return;
 
+    qDebug()<<"****************** add favorite program 222222";
     m_FavProgramIDs.clear();
     mp_ProgramList = mp_DataConnector->ProgramList;
     if (bOnlyAddCleaningProgram)
@@ -209,7 +212,7 @@ void CFavoriteProgramsPanelWidget::OnFavProgramButtonClicked(int btnIndex)
 	m_NewSelectedProgramId = m_FavProgramIDs.at(m_LastSelectedButtonId);
 	SELECTED_PROGRAM_NAME = mp_ProgramList->GetProgram(m_NewSelectedProgramId)->GetName();
 
-	emit PrepareSelectedProgramChecking(m_NewSelectedProgramId);
+    emit PrepareSelectedProgramChecking(m_RetortID, m_NewSelectedProgramId);
 }
 
 void CFavoriteProgramsPanelWidget::OnResetFocus(bool rst)

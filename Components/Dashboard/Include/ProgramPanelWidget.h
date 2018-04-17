@@ -70,7 +70,9 @@ public:
      *  \return from SetPtrToMainWindow
      */
     /****************************************************************************/
-    void SetPtrToMainWindow(MainMenu::CMainWindow *p_MainWindow, Core::CDataConnector *p_DataConnector);
+    void SetPtrToMainWindow(MainMenu::CMainWindow *p_MainWindow, Core::CDataConnector *p_DataConnector, const QString& RetortID);
+
+    const QString& GetRetortID()const {return m_RetortName;}
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of function ChangeStartButtonToStopState
@@ -180,6 +182,37 @@ public:
      */
     /****************************************************************************/
     void WaitRotaryValveHeatingPrompt(bool bSet);
+
+    /****************************************************************************/
+    /*!
+     *  \brief  Definition/Declaration of signal ProgramActionStopped
+     */
+    /****************************************************************************/
+    void ProgramActionStopped(DataManager::ProgramStatusType_t);
+
+    /****************************************************************************/
+    /*!
+     *  \brief Declaration of signal AddItemsToFavoritePanel
+     *  \param bOnlyAddCleaningProgram = indicate only add cleaning program
+     */
+    /****************************************************************************/
+    void AddItemsToFavoritePanel(bool bOnlyAddCleaningProgram);
+
+public slots:
+    /****************************************************************************/
+    /*!
+     *  \brief Declaration of signal AddItemsToFavoritePanel
+     *
+     */
+    /****************************************************************************/
+    void AddItemsToFavoritePanel();
+
+    /****************************************************************************/
+    /*!
+     *  \brief  Definition/Declaration of OnProgramActionStopped
+     */
+    /****************************************************************************/
+    void OnProgramActionStopped(DataManager::ProgramStatusType_t ProgramStatusType);
 signals:
     /****************************************************************************/
     /*!
@@ -189,21 +222,6 @@ signals:
     /****************************************************************************/
     void ResetFocus(bool reset);
 
-
-    /****************************************************************************/
-    /*!
-     *  \brief Declaration of signal AddItemsToFavoritePanel
-     *  \param bOnlyAddCleaningProgram = indicate only add cleaning program
-     */
-    /****************************************************************************/
-    void AddItemsToFavoritePanel(bool bOnlyAddCleaningProgram);
-    /****************************************************************************/
-    /*!
-     *  \brief Declaration of signal AddItemsToFavoritePanel
-     *
-     */
-    /****************************************************************************/
-    void AddItemsToFavoritePanel();
     /****************************************************************************/
     /*!
      *  \brief  send signal PrepareSelectedProgramChecking to master, for checking program
@@ -231,12 +249,7 @@ signals:
     void ProgramSelected(QString& ProgramId, int asapEndTime,
                          bool bIsFirstStepFixation, QList<QString>& selectedStationList,
                          int firstProgramStepIndex);
-    /****************************************************************************/
-    /*!
-     *  \brief  Definition/Declaration of signal ProgramActionStopped
-     */
-    /****************************************************************************/
-    void ProgramActionStopped(DataManager::ProgramStatusType_t);
+
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal ProgramActionStarted
@@ -272,7 +285,7 @@ signals:
      *
      */
     /****************************************************************************/
-    void CheckPreConditionsToRunProgram();
+    void CheckPreConditionsToRunProgram(const QString& RetortID);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of signal CheckPreConditionsToRunProgram
@@ -313,7 +326,22 @@ public:
      /****************************************************************************/
      void ResetInFavProgramButtonClicked();
 
-     QString GetSelectedRetort()const {return m_SelectedRetort;}
+     /****************************************************************************/
+     /*!
+      *  \brief  Definition/Declaration of SwitchToFavoritePanel
+      */
+     /****************************************************************************/
+     void SwitchToFavoritePanel();
+
+     void UpdateCurrentProgramStepInfo(const MsgClasses::CmdCurrentProgramStepInfor & cmd);
+
+     /****************************************************************************/
+     /*!
+      *  \brief  Definition/Declaration of OnPreTestDone
+      */
+     /****************************************************************************/
+     void OnPreTestDone();
+
 private slots:
      /****************************************************************************/
      /*!
@@ -336,18 +364,6 @@ private slots:
     /****************************************************************************/
     void OnProgramActionStarted(DataManager::ProgramActionType_t ProgramActionType, int remainingTimeTotal,
                                 const QDateTime& startDateTime, bool IsResume);//in seconds
-    /****************************************************************************/
-    /*!
-     *  \brief  Definition/Declaration of OnProgramActionStopped
-     */
-    /****************************************************************************/
-    void OnProgramActionStopped(DataManager::ProgramStatusType_t ProgramStatusType);
-    /****************************************************************************/
-    /*!
-     *  \brief  Definition/Declaration of SwitchToFavoritePanel
-     */
-    /****************************************************************************/
-    void SwitchToFavoritePanel();
 
     /****************************************************************************/
     /*!
@@ -355,26 +371,19 @@ private slots:
      */
     /****************************************************************************/
     void OnUpdatePanelProgram();
-    /****************************************************************************/
-    /*!
-     *  \brief  Definition/Declaration of OnPreTestDone
-     */
-    /****************************************************************************/
-    void OnPreTestDone();
+
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of UpdateProgramTimerStatus
      */
     /****************************************************************************/
-    void UpdateProgramTimerStatus(bool enable);
+    void UpdateProgramTimerStatus(const QString& RetortID, bool enable);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of OnPrepareSelectedProgramChecking
      */
     /****************************************************************************/
-    void OnPrepareSelectedProgramChecking(const QString&);
-
-    void OnComboBoxIndexChanged(int);
+    void OnPrepareSelectedProgramChecking(const QString&, const QString&);
 
 private:
     /****************************************************************************/
@@ -433,8 +442,8 @@ private:
     bool m_ProgramStartReady;
     bool m_bWaitRotaryValveHeatingPrompt;
 
-    QMap<QString, QPair<QString, QString>> m_RetortProgram; // retort, selected program, confirmed program
-    QString m_SelectedRetort;
+    //QMap<QString, QPair<QString, QString>> m_RetortProgram; // retort, selected program, confirmed program
+    QString m_RetortName;
 };
 
 }// end namespace Dashboard
