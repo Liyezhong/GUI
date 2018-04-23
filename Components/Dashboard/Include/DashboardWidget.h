@@ -54,25 +54,6 @@ class CDashboardWidget : public QWidget
     Q_OBJECT
     
 public:
-    ///Program stage status, some stage(filling/draining) the "Pause" button can not be pressed.
-    ///so it should be disabled.
-    typedef enum {
-        Undefined,
-        Enabled,
-        Disabled
-    } ProgramStageStatus_t;
-
-    ///Program status, defined for "Start", "Abort" button status control
-    typedef enum {
-        Undefined_ProgramStatus,
-        ProgramRunning,
-        Paused,
-        Aborting,
-        Completed,
-        CompletedAsSafeReagent,
-        CompletedAsPowerFailure,
-        Aborted
-    } ProgramStatus_t;
 
     /****************************************************************************/
     /*!
@@ -151,7 +132,7 @@ private:
     /****************************************************************************/
     void RetranslateUI();
     void SetCassetteNumber();
-    bool IsOKPreConditionsToRunProgram(QString& reagentExpiredFlag);
+    bool IsOKPreConditionsToRunProgram(const QString& ProgramID, QString& reagentExpiredFlag);
     /****************************************************************************/
     /*!
      *  \brief  Definition/Declaration of function SwitchToFavoritePanel
@@ -180,8 +161,7 @@ private:
     QString m_strCheckSafeReagent;
     QString m_strNotFoundStation;
     QString m_strCheckEmptyStation;
-    QString m_strDiffTemp;       ///<  Declaration of variable m_strDiffTemp
-    static QString m_SelectedProgramId;
+    QString m_strDiffTemp;       ///<  Declaration of variable m_strDiffTemp 
     QList<QString> m_StationList;
     int m_TimeProposedForProgram;           //!< Time costed only for the whole program, exclude the time for the delayed time
     int m_CostedTimeBeforeParaffin;         //!< Time costed before the program step of paraffin.
@@ -212,7 +192,6 @@ private:
     QString m_strCoolingDown;
     QDateTime m_StartDateTime;
     QString m_strProgramIsAborted;
-    int m_CurProgramStepIndex;
     bool m_ProcessRunning;                      //!< Process running state
     bool m_IsDrainingWhenPrgrmCompleted;
     bool m_bRetortLocked;
@@ -226,8 +205,6 @@ private:
     bool m_bIsFirstStepFixation;
     quint32 m_TotalCassette;
     bool m_HaveSucked;
-    ProgramStageStatus_t m_ProgramStageStatus;
-    ProgramStatus_t m_ProgramStatus;
     bool m_IsProgramAbortedOrCompleted;
     Dashboard::CDashboardDateTimeWidget *mp_wdgtDateTime;       ///<  Definition/Declaration of variable mp_wdgtDateTime
     bool m_IsInAppendCasseteStatus;
@@ -502,7 +479,7 @@ private slots:
      *  \param  selectedStationList = the used station for the selected program
      */
     /****************************************************************************/
-    void ProgramSelected(QString & programId, QList<QString>& selectedStationList);
+    void ProgramSelected(QString& programId, QList<QString>& selectedStationList);
     /****************************************************************************/
     /*!
      *  \brief  when selete a program, emit signal ProgramSelected
@@ -513,7 +490,7 @@ private slots:
      *  \param firstProgramStepIndex = the first program step index
      */
     /****************************************************************************/
-    void ProgramSelected(QString & programId, int asapEndTime,
+    void ProgramSelected(QString& programId, int asapEndTime,
                          bool bIsFirstStepFixation, QList<QString>& selectedStationList,
                          int firstProgramStepIndex);
     /****************************************************************************/

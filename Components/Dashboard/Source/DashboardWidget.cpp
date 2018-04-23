@@ -33,8 +33,6 @@
 
 using namespace Dashboard;
 
-QString CDashboardWidget::m_SelectedProgramId = "";
-
 CDashboardWidget::CDashboardWidget(Core::CDataConnector *p_DataConnector,
                                      MainMenu::CMainWindow *p_Parent) :
     ui(new Ui::CDashboardWidget),
@@ -50,14 +48,11 @@ CDashboardWidget::CDashboardWidget(Core::CDataConnector *p_DataConnector,
     m_CostedTimeBeforeParaffin(0),
     m_ParaffinHeatingDuration(0),
     m_ProgramStartReady(false),
-    m_CurProgramStepIndex(-1),
     m_ProcessRunning(false),
     m_IsDrainingWhenPrgrmCompleted(false),
     m_bIsFirstStepFixation(false),
     m_TotalCassette(0),
     m_HaveSucked(false),
-    m_ProgramStageStatus(Undefined),
-    m_ProgramStatus(Undefined_ProgramStatus),
     m_IsProgramAbortedOrCompleted(false),
     m_IsInAppendCasseteStatus(false),
     m_bWaitRotaryValveHeatingPrompt(false),
@@ -224,24 +219,23 @@ CDashboardWidget::~CDashboardWidget()
 
 void CDashboardWidget::OnCurrentProgramStepInforUpdated(const MsgClasses::CmdCurrentProgramStepInfor & cmd)
 {
-    if (!m_SelectedProgramId.isEmpty() && m_SelectedProgramId.at(0) == 'C')
-    return;
-
-    if (m_ProgramStatus != ProgramRunning)
-     return;
-
-    m_CurProgramStepIndex = cmd.CurProgramStepIndex();
     CProgramPanelWidget* pProgramPanel = GetPanelWidget(cmd.RetortName());
-    if (NULL == pProgramPanel)
+    if (NULL == pProgramPanel || pProgramPanel->GetProgramStatus() != ProgramRunning)
+    {
+        return;
+    }
+
+    if (!pProgramPanel->GetSelectProgramID().isEmpty() && pProgramPanel->GetSelectProgramID().at(0) == 'C')
     {
         return;
     }
 
     pProgramPanel->UpdateCurrentProgramStepInfo(cmd);
+    pProgramPanel->SetCurPorgramStep(cmd.CurProgramStepIndex());
 
     if (MainMenu::CMainWindow::GetCurrentUserRole() == MainMenu::CMainWindow::Operator)
     {
-        if ((cmd.CurProgramStepIndex() < 3) && (m_ProgramStageStatus == Enabled))
+        if ((cmd.CurProgramStepIndex() < 3) && (pProgramPanel->GetStageStatus() == Enabled))
         {
             pProgramPanel->EnablePauseButton(true);
         }
@@ -251,7 +245,7 @@ void CDashboardWidget::OnCurrentProgramStepInforUpdated(const MsgClasses::CmdCur
             pProgramPanel->EnablePauseButton(false);
         }
 
-        if (m_CurProgramStepIndex == 0)
+        if (pProgramPanel->GetCurProgramStep() == 0)
         {
             pProgramPanel->EnableStartButton(true);
         }
@@ -262,7 +256,7 @@ void CDashboardWidget::OnCurrentProgramStepInforUpdated(const MsgClasses::CmdCur
     }
     else//supervisor
     {
-         if (m_ProgramStageStatus == Enabled)
+         if (pProgramPanel->GetStageStatus() == Enabled)
          {
             pProgramPanel->EnablePauseButton(true);
          }
@@ -274,12 +268,19 @@ void CDashboardWidget::OnRetortLockStatusChanged(const MsgClasses::CmdLockStatus
     if (m_IsInAppendCasseteStatus)
         return;
 
+    CProgramPanelWidget* pProgramPanel = GetPanelWidget(cmd.RetortName());
+    if (NULL == pProgramPanel)
+    {
+        return;
+    }
+
     m_IsInAppendCasseteStatus = true;
     m_bRetortLocked = cmd.IsLocked();
 
     if (cmd.IsLocked())
     {
-        if ((m_CurProgramStepIndex < 3) && (m_ProgramStatus == Paused) && (m_pUserSetting->GetModeRMSProcessing() == Global::RMS_CASSETTES) && (m_SelectedProgramId.at(0) != 'C'))
+        if ((pProgramPanel->GetCurProgramStep() < 3) && (pProgramPanel->GetProgramStatus() == Paused) &&
+                (m_pUserSetting->GetModeRMSProcessing() == Global::RMS_CASSETTES) && (pProgramPanel->GetSelectProgramID().at(0) != 'C'))
         {
             MainMenu::CMessageDlg messageDlg(this);
             messageDlg.SetIcon(QMessageBox::Information);
@@ -308,7 +309,7 @@ void CDashboardWidget::OnProgramStartReadyUpdated(const QString& RetortID)
     m_ProgramStartReady = true;
     pProgramPanel->ProgramStartReady(true);
 	m_bWaitRotaryValveHeatingPrompt = false;
-    if (m_ProgramStatus != Aborting)
+    if (pProgramPanel->GetProgramStatus() != Aborting)
     {
         pProgramPanel->OnProgramStartReadyUpdated();
         if (m_ShowReadyStartPrompt)
@@ -319,7 +320,8 @@ void CDashboardWidget::OnProgramStartReadyUpdated(const QString& RetortID)
             ConfirmationMessageDlg.SetIcon(QMessageBox::Information);
             ConfirmationMessageDlg.SetButtonText(1, CommonString::strOK);
             ConfirmationMessageDlg.HideButtons();
-            (void)ConfirmationMessageDlg.exec();
+            //(void)ConfirmationMessageDlg.exec();
+            qDebug()<<"******* Ready to start a new program in "<<RetortID;
             m_ShowReadyStartPrompt = false;
         }
     }
@@ -327,8 +329,8 @@ void CDashboardWidget::OnProgramStartReadyUpdated(const QString& RetortID)
 
 void CDashboardWidget::CancelProgramWillCompletePrompt(const QString& RetortID)
 {
-    if (mp_ProgramWillCompleteMsgDlg)
-        mp_ProgramWillCompleteMsgDlg->reject();
+//    if (mp_ProgramWillCompleteMsgDlg)
+//        mp_ProgramWillCompleteMsgDlg->reject();
 }
 
 void CDashboardWidget::OnProgramWillComplete(const QString& RetortID)
@@ -339,32 +341,31 @@ void CDashboardWidget::OnProgramWillComplete(const QString& RetortID)
         return;
     }
 
-    mp_ProgramWillCompleteMsgDlg = new MainMenu::CMessageDlg(this);
-    mp_ProgramWillCompleteMsgDlg->SetIcon(QMessageBox::Information);
-    mp_ProgramWillCompleteMsgDlg->SetTitle(CommonString::strConfirmMsg + "-" + RetortID);
+    MainMenu::CMessageDlg* pProgramWillCompleteMsgDlg = new MainMenu::CMessageDlg(this);
+    pProgramWillCompleteMsgDlg->SetIcon(QMessageBox::Information);
+    pProgramWillCompleteMsgDlg->SetTitle(CommonString::strConfirmMsg + "-" + RetortID);
     QString strTemp(m_strProgramWillComplete);
     strTemp = strTemp.arg(CFavoriteProgramsPanelWidget::SELECTED_PROGRAM_NAME);
-    mp_ProgramWillCompleteMsgDlg->SetText(strTemp);
-    mp_ProgramWillCompleteMsgDlg->SetButtonText(1, CommonString::strOK);
-    mp_ProgramWillCompleteMsgDlg->HideButtons();
+    pProgramWillCompleteMsgDlg->SetText(strTemp);
+    pProgramWillCompleteMsgDlg->SetButtonText(1, CommonString::strOK);
+    pProgramWillCompleteMsgDlg->HideButtons();
 
-    //emit ProgramActionStopped(DataManager::PROGRAM_STATUS_PAUSED);//pause ProgressBar and EndTime countdown
     pProgramPanel->OnProgramActionStopped(DataManager::PROGRAM_STATUS_PAUSED);
 
-    if (mp_ProgramWillCompleteMsgDlg->exec())
+    if (pProgramWillCompleteMsgDlg->exec())
     {
         m_IsDrainingWhenPrgrmCompleted = true;
 
         //Resume EndTime countdown
         pProgramPanel->OnProgramActionStarted(DataManager::PROGRAM_START, 0, Global::AdjustedTime::Instance().GetCurrentDateTime(), true);
 
-        mp_DataConnector->SendProgramAction(RetortID, m_SelectedProgramId, DataManager::PROGRAM_DRAIN);
+        mp_DataConnector->SendProgramAction(RetortID, pProgramPanel->GetSelectProgramID(), DataManager::PROGRAM_DRAIN);
         //disable pause and abort    
         pProgramPanel->EnableStartButton(false);
         pProgramPanel->EnablePauseButton(false);
     }
-    delete mp_ProgramWillCompleteMsgDlg;
-    mp_ProgramWillCompleteMsgDlg = NULL;
+    delete pProgramWillCompleteMsgDlg;
+    pProgramWillCompleteMsgDlg = NULL;
 }
 
 void CDashboardWidget::CancelTissueProtectPassedPrompt(const QString& RetortID)
@@ -375,6 +376,12 @@ void CDashboardWidget::CancelTissueProtectPassedPrompt(const QString& RetortID)
 
 void CDashboardWidget::OnTissueProtectPassed(const QString& RetortID, bool flag)
 {
+    CProgramPanelWidget* pProgramPanel = GetPanelWidget(RetortID);
+    if (NULL == pProgramPanel)
+    {
+        return;
+    }
+
     mp_TissueProtectPassedMsgDlg = new MainMenu::CMessageDlg(this);
     if (flag)
     {
@@ -394,7 +401,7 @@ void CDashboardWidget::OnTissueProtectPassed(const QString& RetortID, bool flag)
 
     if (mp_TissueProtectPassedMsgDlg->exec())
     {
-        mp_DataConnector->SendProgramAction(RetortID, m_SelectedProgramId, DataManager::PROGRAM_DRAIN_SR);
+        mp_DataConnector->SendProgramAction(RetortID, pProgramPanel->GetSelectProgramID(), DataManager::PROGRAM_DRAIN_SR);
         delete mp_TissueProtectPassedMsgDlg;
         mp_TissueProtectPassedMsgDlg = NULL;
         return;
@@ -423,7 +430,7 @@ void CDashboardWidget::OnOvenCoverOpen()
     mp_OvenLidOpenMsgDlg->HideButtons();
     if (mp_OvenLidOpenMsgDlg->exec())
     {
-        mp_DataConnector->SendProgramAction("Common", m_SelectedProgramId, DataManager::PROGRAM_OVEN_COVER_OPEN);
+        mp_DataConnector->SendProgramAction("Common", "non-retort", DataManager::PROGRAM_OVEN_COVER_OPEN);
         delete mp_OvenLidOpenMsgDlg;
         mp_OvenLidOpenMsgDlg = NULL;
         return;
@@ -446,6 +453,12 @@ void CDashboardWidget::CancelRetortCoverOpenMessage(const QString& RetortID)
 
 void CDashboardWidget::OnRetortCoverOpen(const QString& RetortID)
 {
+    CProgramPanelWidget* pProgramPanel = GetPanelWidget(RetortID);
+    if (NULL == pProgramPanel)
+    {
+        return;
+    }
+
     mp_RetortLidOpenMsgDlg = new MainMenu::CMessageDlg(this);
     mp_RetortLidOpenMsgDlg->SetIcon(QMessageBox::Critical);
     QString strTemp(m_strRetortCoverOpen);
@@ -455,7 +468,7 @@ void CDashboardWidget::OnRetortCoverOpen(const QString& RetortID)
 
     if (mp_RetortLidOpenMsgDlg->exec())
     {
-        mp_DataConnector->SendProgramAction(RetortID, m_SelectedProgramId, DataManager::PROGRAM_RETORT_COVER_OPEN);
+        mp_DataConnector->SendProgramAction(RetortID, pProgramPanel->GetSelectProgramID(), DataManager::PROGRAM_RETORT_COVER_OPEN);
         delete mp_RetortLidOpenMsgDlg;
         mp_RetortLidOpenMsgDlg = NULL;
         return;
@@ -476,7 +489,7 @@ void CDashboardWidget::OnPowerFailureMsg()
 
     if (messageDlg.exec())
     {
-        mp_DataConnector->SendProgramAction("Common", m_SelectedProgramId, DataManager::PROGRAM_POWER_FAILURE_MSG);
+        mp_DataConnector->SendProgramAction("Common", "non-retort", DataManager::PROGRAM_POWER_FAILURE_MSG);
         return;
     }
 }
@@ -516,9 +529,13 @@ void CDashboardWidget::OnWaitRotaryValveHeatingPrompt()
     m_bWaitRotaryValveHeatingPrompt = true;
     ui->programPanelWidgetA->WaitRotaryValveHeatingPrompt(true);
     ui->programPanelWidgetB->WaitRotaryValveHeatingPrompt(true);
-    if (m_ProgramStatus != Aborting)
+    if (ui->programPanelWidgetA->GetProgramStatus() != Aborting)
     {
         ui->programPanelWidgetA->OnWaitRotaryValveHeatingPrompt();
+    }
+
+    if (ui->programPanelWidgetB->GetProgramStatus() != Aborting)
+    {
         ui->programPanelWidgetB->OnWaitRotaryValveHeatingPrompt();
     }
 }
@@ -557,7 +574,7 @@ void CDashboardWidget::OnProgramBeginAbort(const QString& RetortID)
     //pProgramPanel->ProgramActionStarted(RetortID, DataManager::PROGRAM_ABORT, 90, Global::AdjustedTime::Instance().GetCurrentDateTime(), false);
     pProgramPanel->EnableStartButton(false);
     pProgramPanel->EnablePauseButton(false);
-    m_ProgramStatus = Aborting;
+    pProgramPanel->SetProgramStatus(Aborting);
     Core::CGlobalHelper::SetProgramPaused(false);
 }
 
@@ -570,9 +587,9 @@ void CDashboardWidget::TakeOutSpecimenAndWaitRunCleaning(const QString& RetortID
     {
         return;
     }
-    if (!m_SelectedProgramId.isEmpty() && m_SelectedProgramId.at(0) == 'C')
+    if (!pProgramPanel->GetSelectProgramID().isEmpty() && pProgramPanel->GetSelectProgramID().at(0) == 'C')
     {
-       m_ProgramStatus = Undefined_ProgramStatus;
+       pProgramPanel->SetProgramStatus(Undefined_ProgramStatus);
        Core::CGlobalHelper::SetProgramPaused(false);
        //represent the retort as contaminated status
        //ui->containerPanelWidget->UpdateRetortStatus(DataManager::CONTAINER_STATUS_CONTAMINATED, lastReagentGroupID, "");
@@ -585,11 +602,11 @@ void CDashboardWidget::TakeOutSpecimenAndWaitRunCleaning(const QString& RetortID
        pProgramPanel->EnablePauseButton(false);
        //show all Stations and pipes
        m_StationList.clear();
-       m_SelectedProgramId = "";
+       QString ProgramID("");
        int asapEndTime = 0;
-       emit ProgramSelected(m_SelectedProgramId, m_StationList);
+       emit ProgramSelected(ProgramID, m_StationList);
        //emit ProgramSelected(m_SelectedProgramId, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
-       pProgramPanel->ProgramSelected(m_SelectedProgramId, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
+       pProgramPanel->OnProgramSelected(ProgramID, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
 
        //switch to the dashboard page
        mp_MainWindow->SetTabWidgetIndex();
@@ -606,26 +623,28 @@ void CDashboardWidget::TakeOutSpecimenAndWaitRunCleaning(const QString& RetortID
 #endif
             QString strMsgDisplay(m_strTakeOutSpecimen);
             QString strTemp;
-            if (m_ProgramStatus == Completed)
+
+            ProgramStatus_t programStatus = pProgramPanel->GetProgramStatus();
+            if (programStatus == Completed)
             {
                 strTemp = m_strProgramCompleteSuccessfully.arg(CFavoriteProgramsPanelWidget::SELECTED_PROGRAM_NAME);
             }
-            else if (m_ProgramStatus == Aborting)
+            else if (programStatus == Aborting)
             {
                 strTemp = m_strProgramIsAborted.arg(CFavoriteProgramsPanelWidget::SELECTED_PROGRAM_NAME);
             }
-            else if (m_ProgramStatus == CompletedAsSafeReagent)
+            else if (programStatus == CompletedAsSafeReagent)
             {
 
                 strTemp = m_strProgramCompleteSafeReagent.arg(CFavoriteProgramsPanelWidget::SELECTED_PROGRAM_NAME);
             }
-            else if (m_ProgramStatus == CompletedAsPowerFailure)
+            else if (programStatus == CompletedAsPowerFailure)
             {
 
                 strTemp = m_strProgramComplete.arg(CFavoriteProgramsPanelWidget::SELECTED_PROGRAM_NAME);
             }
             strMsgDisplay = strTemp + " " + m_strTakeOutSpecimen;
-            m_ProgramStatus = Undefined_ProgramStatus;
+            pProgramPanel->SetProgramStatus(Undefined_ProgramStatus);
             Core::CGlobalHelper::SetProgramPaused(false);
 
 
@@ -652,10 +671,10 @@ void CDashboardWidget::TakeOutSpecimenAndWaitRunCleaning(const QString& RetortID
                 pProgramPanel->EnablePauseButton(false);
                 //show all Stations and pipes
                 m_StationList.clear();
-                m_SelectedProgramId = "";
+                QString ProgramID("");
                 int asapEndTime = 0;
-                emit ProgramSelected(m_SelectedProgramId, m_StationList);
-                pProgramPanel->ProgramSelected(m_SelectedProgramId, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
+                emit ProgramSelected(ProgramID, m_StationList);
+                pProgramPanel->OnProgramSelected(ProgramID, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
                 //switch to the dashboard page
                 mp_MainWindow->SetTabWidgetIndex();
                 SwitchToFavoritePanel(RetortID);
@@ -697,7 +716,7 @@ void CDashboardWidget::OnProgramAborted(const QString& RetortID, bool IsRetortCo
     //progress aborted;
     //aborting time countdown is hidden.
     pProgramPanel->IsResumeRun(false);
-    m_CurProgramStepIndex = -1;
+    pProgramPanel->SetCurPorgramStep(-1);
 
     pProgramPanel->OnProgramActionStopped(DataManager::PROGRAM_STATUS_ABORTED);
     Core::CGlobalHelper::SetProgramPaused(false);
@@ -730,7 +749,7 @@ void CDashboardWidget::OnProgramAborted(const QString& RetortID, bool IsRetortCo
 
         delete mp_RemoveSpecimenWhenAbortedDlg;
         mp_RemoveSpecimenWhenAbortedDlg = NULL;
-		m_ProgramStatus = Aborted;
+        pProgramPanel->SetProgramStatus(Aborted);
     }
 }
 
@@ -742,10 +761,10 @@ void CDashboardWidget::OnCleanPrgmCompleteAsSafeReagent(const QString& RetortID)
         return;
     }
 
-    m_CurProgramStepIndex = -1;
+    pProgramPanel->SetCurPorgramStep(-1);
     m_IsDrainingWhenPrgrmCompleted = false;
     pProgramPanel->OnProgramActionStopped(DataManager::PROGRAM_STATUS_COMPLETED);
-    m_ProgramStatus = Completed;
+    pProgramPanel->SetProgramStatus(Completed);
     Core::CGlobalHelper::SetProgramPaused(false);
 
     MainMenu::CMessageDlg messageDlg(this);
@@ -790,7 +809,7 @@ void CDashboardWidget::OnProgramCompleted(const QString& RetortID, DataManager::
     }
 
     pProgramPanel->IsResumeRun(false);
-    m_CurProgramStepIndex = -1;
+    pProgramPanel->SetCurPorgramStep(-1);
     m_IsDrainingWhenPrgrmCompleted = false;
     QString strTemp;
     if (DataManager::COMPLETED_PROGRAM_SAFE_REAGENT == completedProgramType)
@@ -807,35 +826,35 @@ void CDashboardWidget::OnProgramCompleted(const QString& RetortID, DataManager::
     }
 
     bool bExecSubsequent = false;
-    mp_RemoveSpecimenWhenCompletedDlg = new MainMenu::CMessageDlg(this);
-    mp_RemoveSpecimenWhenCompletedDlg->SetIcon(QMessageBox::Information);
-    mp_RemoveSpecimenWhenCompletedDlg->SetButtonText(1, CommonString::strOK);
-    mp_RemoveSpecimenWhenCompletedDlg->HideButtons();
-    if (!m_SelectedProgramId.isEmpty() && m_SelectedProgramId.at(0) == 'C')
+    MainMenu::CMessageDlg* pRemoveSpecimenWhenCompletedDlg = new MainMenu::CMessageDlg(this);
+    pRemoveSpecimenWhenCompletedDlg->SetIcon(QMessageBox::Information);
+    pRemoveSpecimenWhenCompletedDlg->SetButtonText(1, CommonString::strOK);
+    pRemoveSpecimenWhenCompletedDlg->HideButtons();
+    if (!pProgramPanel->GetSelectProgramID().isEmpty() && pProgramPanel->GetSelectProgramID().at(0) == 'C')
     {
-        mp_RemoveSpecimenWhenCompletedDlg->SetTitle(CommonString::strInforMsg + "-" + RetortID);
-        mp_RemoveSpecimenWhenCompletedDlg->SetText(strTemp);
+        pRemoveSpecimenWhenCompletedDlg->SetTitle(CommonString::strInforMsg + "-" + RetortID);
+        pRemoveSpecimenWhenCompletedDlg->SetText(strTemp);
         m_ShowReadyStartPrompt = true;
-        (void)mp_RemoveSpecimenWhenCompletedDlg->exec();
+        (void)pRemoveSpecimenWhenCompletedDlg->exec();
         bExecSubsequent = true;
     }
-    else if (!IsRetortContaminated && (!m_SelectedProgramId.isEmpty() && m_SelectedProgramId.at(0) != 'C'))
+    else if (!IsRetortContaminated && (!pProgramPanel->GetSelectProgramID().isEmpty() && pProgramPanel->GetSelectProgramID().at(0) != 'C'))
     {
-        mp_RemoveSpecimenWhenCompletedDlg->SetTitle(CommonString::strConfirmMsg + "-" + RetortID);
-        mp_RemoveSpecimenWhenCompletedDlg->SetText(strTemp + " " + m_strTakeOutSpecimen);
+        pRemoveSpecimenWhenCompletedDlg->SetTitle(CommonString::strConfirmMsg + "-" + RetortID);
+        pRemoveSpecimenWhenCompletedDlg->SetText(strTemp + " " + m_strTakeOutSpecimen);
 #if defined(__arm__)
         mp_RemoveSpecimenWhenCompletedDlg->EnableButton(1, false);
 #endif
         m_pCheckRetortLidTimer->start();
         m_ShowReadyStartPrompt = true;
-        (void)mp_RemoveSpecimenWhenCompletedDlg->exec();
+        (void)pRemoveSpecimenWhenCompletedDlg->exec();
         m_pCheckRetortLidTimer->stop();
         bExecSubsequent = true;
         mp_DataConnector->SendTakeOutSpecimenFinishedCMD();
     }
 
-    delete mp_RemoveSpecimenWhenCompletedDlg;
-    mp_RemoveSpecimenWhenCompletedDlg = NULL;
+    delete pRemoveSpecimenWhenCompletedDlg;
+    pRemoveSpecimenWhenCompletedDlg = NULL;
 
     if (bExecSubsequent)
     {
@@ -846,19 +865,19 @@ void CDashboardWidget::OnProgramCompleted(const QString& RetortID, DataManager::
         pProgramPanel->EnableStartButton(false);
 
         m_StationList.clear();
-        m_SelectedProgramId = "";
+        QString ProgramID("");
         int asapEndTime = 0;
-        emit ProgramSelected(m_SelectedProgramId, m_StationList);
-        pProgramPanel->ProgramSelected(m_SelectedProgramId, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
+        emit ProgramSelected(ProgramID, m_StationList);
+        pProgramPanel->OnProgramSelected(ProgramID, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
     }
 
     pProgramPanel->OnProgramActionStopped(DataManager::PROGRAM_STATUS_COMPLETED);
     if (DataManager::COMPLETED_PROGRAM_SAFE_REAGENT == completedProgramType)
-        m_ProgramStatus = CompletedAsSafeReagent;
+        pProgramPanel->SetProgramStatus(CompletedAsSafeReagent);
     else if (DataManager::COMPLETED_PROGRAM_POWER_FAILURE == completedProgramType)
-        m_ProgramStatus = CompletedAsPowerFailure;
+        pProgramPanel->SetProgramStatus(CompletedAsPowerFailure);
     else
-        m_ProgramStatus = Completed;
+        pProgramPanel->SetProgramStatus(Completed);
     Core::CGlobalHelper::SetProgramPaused(false);
 }
 
@@ -879,7 +898,7 @@ void CDashboardWidget::OnProgramRunBegin(const QString& RetortID)
     int remainingTime = curDateTime.secsTo(m_EndDateTime);
     pProgramPanel->OnProgramActionStarted(DataManager::PROGRAM_START, remainingTime, curDateTime, isResumeRun);
 
-    if (m_SelectedProgramId.at(0) == 'C')
+    if (pProgramPanel->GetSelectProgramID().at(0) == 'C')
     {
         pProgramPanel->EnablePauseButton(false);//disable pause button
         pProgramPanel->EnableStartButton(false);//disable Stop button
@@ -890,7 +909,7 @@ void CDashboardWidget::OnProgramRunBegin(const QString& RetortID)
         {
             if (MainMenu::CMainWindow::GetCurrentUserRole() == MainMenu::CMainWindow::Operator)
             {
-                if (m_CurProgramStepIndex < 3)
+                if (pProgramPanel->GetCurProgramStep() < 3)
                 {
                     pProgramPanel->EnablePauseButton(true);
                 }
@@ -901,12 +920,12 @@ void CDashboardWidget::OnProgramRunBegin(const QString& RetortID)
             }
         }
 
-        if (m_CurProgramStepIndex > 0 && MainMenu::CMainWindow::GetCurrentUserRole() == MainMenu::CMainWindow::Operator) // operator can't abort program when beginning the second step.
+        if (pProgramPanel->GetCurProgramStep() > 0 && MainMenu::CMainWindow::GetCurrentUserRole() == MainMenu::CMainWindow::Operator) // operator can't abort program when beginning the second step.
             pProgramPanel->EnableStartButton(false);
         else
             pProgramPanel->EnableStartButton(true);//enable stop button
     }
-    m_ProgramStatus = ProgramRunning;
+    pProgramPanel->SetProgramStatus(ProgramRunning);
     Core::CGlobalHelper::SetProgramPaused(false);
     pProgramPanel->IsResumeRun(true);
     m_StartDateTime = Global::AdjustedTime::Instance().GetCurrentDateTime();
@@ -924,7 +943,7 @@ void CDashboardWidget::OnProgramPaused(const QString& RetortID)
     pProgramPanel->ChangeStartButtonToStartState();
 
     qDebug()<< "OnProgramPaused---ChangeStartButtonToStartState";
-    m_ProgramStatus = Paused;
+    pProgramPanel->SetProgramStatus(Paused);
     Core::CGlobalHelper::SetProgramPaused(true);
 }
 
@@ -938,10 +957,10 @@ void CDashboardWidget::OnPauseButtonEnable(const QString& RetortID, bool bEnable
 
     if (bEnable)
     {
-        m_ProgramStageStatus = Enabled;
+        pProgramPanel->SetProgramStageStatus(Enabled);
         if (MainMenu::CMainWindow::GetCurrentUserRole() == MainMenu::CMainWindow::Operator)
         {
-            if (m_CurProgramStepIndex < 3)
+            if (pProgramPanel->GetCurProgramStep() < 3)
             {
                 pProgramPanel->EnablePauseButton(true);
             }
@@ -953,10 +972,10 @@ void CDashboardWidget::OnPauseButtonEnable(const QString& RetortID, bool bEnable
     }
     else
     {
-        m_ProgramStageStatus = Disabled;
+        pProgramPanel->SetProgramStageStatus(Disabled);
         if (MainMenu::CMainWindow::GetCurrentUserRole() == MainMenu::CMainWindow::Operator)
         {
-            if (m_CurProgramStepIndex < 3)
+            if (pProgramPanel->GetCurProgramStep() < 3)
             {
                 pProgramPanel->EnablePauseButton(false);
             }
@@ -996,16 +1015,27 @@ void CDashboardWidget::OnPauseTimeout15Mintues(const QString& RetortID)
 
 void CDashboardWidget::OnUnselectProgram()
 {
-    if (!m_SelectedProgramId.isEmpty())
+    QString ProgramID("");
+    if (!ui->programPanelWidgetA->GetSelectProgramID().isEmpty())
     {
-        m_SelectedProgramId = "";
         ui->programPanelWidgetA->EnableStartButton(false);
+        m_StationList.clear();
+        int asapEndTime = 0;
+
+        emit ProgramSelected(ProgramID, m_StationList);
+        ui->programPanelWidgetA->OnProgramSelected(ProgramID, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
+        emit UpdateSelectedStationList(m_StationList);
+        emit UndoProgramSelection();
+    }
+
+    if (!ui->programPanelWidgetB->GetSelectProgramID().isEmpty())
+    {
         ui->programPanelWidgetB->EnableStartButton(false);
         m_StationList.clear();
         int asapEndTime = 0;
 
-        emit ProgramSelected(m_SelectedProgramId, m_StationList);
-        emit ProgramSelected(m_SelectedProgramId, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
+        emit ProgramSelected(ProgramID, m_StationList);
+        ui->programPanelWidgetB->OnProgramSelected(ProgramID, asapEndTime, m_bIsFirstStepFixation, m_StationList, 0);
         emit UpdateSelectedStationList(m_StationList);
         emit UndoProgramSelection();
     }
@@ -1105,13 +1135,13 @@ int CDashboardWidget::GetASAPTime(int TimeActual,//TimeActual is seconds
     return (TimeActual + TimeDelta);//seconds
 }
 
-bool CDashboardWidget::IsOKPreConditionsToRunProgram(QString& reagentExpiredFlag)
+bool CDashboardWidget::IsOKPreConditionsToRunProgram(const QString& ProgramID, QString& reagentExpiredFlag)
 {
 
-    if ("" == m_SelectedProgramId)
+    if ("" == ProgramID)
         return false;
 
-    if (m_SelectedProgramId.at(0) != 'C')
+    if (ProgramID.at(0) != 'C')
     {
         MainMenu::CMessageDlg msgDlg(this);
         msgDlg.SetIcon(QMessageBox::Warning);
@@ -1146,13 +1176,13 @@ bool CDashboardWidget::IsOKPreConditionsToRunProgram(QString& reagentExpiredFlag
 //        return false;
 //    }
 
-    const DataManager::CProgram* pSelectedProgram = mp_ProgramList->GetProgram(m_SelectedProgramId);
+    const DataManager::CProgram* pSelectedProgram = mp_ProgramList->GetProgram(ProgramID);
     Q_ASSERT(pSelectedProgram);
     //Check if Leica program and RMS OFF?
     DataManager::CHimalayaUserSettings* userSetting = mp_DataConnector->SettingsInterface->GetUserSettings();
     bool bShowRMSOffWarning = false;
     bool isLeicaProgram = pSelectedProgram->IsLeicaProgram();
-    if (m_SelectedProgramId.at(0) != 'C')
+    if (ProgramID.at(0) != 'C')
     {
         if ((Global::RMS_OFF == userSetting->GetModeRMSProcessing()) && isLeicaProgram)
         {
@@ -1259,7 +1289,7 @@ bool CDashboardWidget::IsOKPreConditionsToRunProgram(QString& reagentExpiredFlag
     }
 
     //Check safe reagent
-    if ((m_SelectedProgramId.at(0) != 'C') && (m_iWhichStepHasNoSafeReagent  != -1))
+    if ((ProgramID.at(0) != 'C') && (m_iWhichStepHasNoSafeReagent  != -1))
     {
         messageDlg.SetIcon(QMessageBox::Warning);
         messageDlg.SetTitle(CommonString::strWarning);
@@ -1276,7 +1306,7 @@ bool CDashboardWidget::IsOKPreConditionsToRunProgram(QString& reagentExpiredFlag
 
     bool bCanNotRun = true;
     int timeDelta = 0;
-    if (m_SelectedProgramId.at(0) != 'C')
+    if (ProgramID.at(0) != 'C')
     {
         int paraffinMeltCostedTime = Global::AdjustedTime::Instance().GetCurrentDateTime().secsTo(m_ParaffinStartHeatingTime);
         (void)GetASAPTime(m_TimeProposedForProgram,
@@ -1319,7 +1349,7 @@ bool CDashboardWidget::IsOKPreConditionsToRunProgram(QString& reagentExpiredFlag
     if ( mp_DataConnector)
     {
         //input cassette number
-        if (m_SelectedProgramId.at(0) != 'C' && Global::RMS_CASSETTES == mp_DataConnector->SettingsInterface->GetUserSettings()->GetModeRMSProcessing())
+        if (ProgramID.at(0) != 'C' && Global::RMS_CASSETTES == mp_DataConnector->SettingsInterface->GetUserSettings()->GetModeRMSProcessing())
         {
             CCassetteNumberInputWidget *pCassetteInput = new Dashboard::CCassetteNumberInputWidget(this, mp_MainWindow);
 
@@ -1338,7 +1368,7 @@ bool CDashboardWidget::IsOKPreConditionsToRunProgram(QString& reagentExpiredFlag
     }
 
     //show Datetime dialog
-    if (m_SelectedProgramId.at(0) != 'C')
+    if (ProgramID.at(0) != 'C')
     {
         mp_wdgtDateTime->UpdateProgramName();
         if (mp_wdgtDateTime->exec() == (int)QDialog::Rejected)
@@ -1384,12 +1414,12 @@ void CDashboardWidget::CheckPreConditionsToRunProgram(const QString& RetortID)
     }
 
     QString reagentExpiredFlag;
-    if (IsOKPreConditionsToRunProgram(reagentExpiredFlag))
+    if (IsOKPreConditionsToRunProgram(pProgramPanel->GetSelectProgramID(), reagentExpiredFlag))
     {
         int EndTimeDelta = m_AsapEndDateTime.secsTo(m_EndDateTime);
         int delayTime = EndTimeDelta + m_TimeDelta;
         int runDuration = Global::AdjustedTime::Instance().GetCurrentDateTime().secsTo(m_EndDateTime);
-        mp_DataConnector->SendProgramAction(RetortID, m_SelectedProgramId, DataManager::PROGRAM_START, delayTime, runDuration, reagentExpiredFlag);
+        mp_DataConnector->SendProgramAction(RetortID, pProgramPanel->GetSelectProgramID(), DataManager::PROGRAM_START, delayTime, runDuration, reagentExpiredFlag);
         pProgramPanel->ChangeStartButtonToStopState();
     }
     else
@@ -1414,12 +1444,12 @@ void CDashboardWidget::PrepareSelectedProgramChecking(const QString& retortId,co
 void CDashboardWidget::OnRecoveryFromPowerFailure(const MsgClasses::CmdRecoveryFromPowerFailure& cmd)
 {
     ui->programPanelWidgetA->SwitchToProgramRunningStatus(cmd);
-    m_SelectedProgramId = cmd.GetProgramID();
-    if (!m_SelectedProgramId.isEmpty())
+    QString selectedProgramId = cmd.GetProgramID();
+    if (!selectedProgramId.isEmpty())
     {
-        CFavoriteProgramsPanelWidget::SELECTED_PROGRAM_NAME = mp_ProgramList->GetProgram(m_SelectedProgramId)->GetName();
+        CFavoriteProgramsPanelWidget::SELECTED_PROGRAM_NAME = mp_ProgramList->GetProgram(selectedProgramId)->GetName();
     }
-    emit ProgramSelected(m_SelectedProgramId, const_cast<QList<QString>&>(cmd.GetStationList()));
+    emit ProgramSelected(selectedProgramId, const_cast<QList<QString>&>(cmd.GetStationList()));
     QString scenarioID = QString::number(cmd.GetScenario());
     if ('4' == scenarioID.at(scenarioID.count() - 1))
     {
@@ -1522,18 +1552,17 @@ void CDashboardWidget::OnProgramSelectedReply(const MsgClasses::CmdProgramSelect
 
     emit ResetFocus(false);
 
-    m_SelectedProgramId = m_NewSelectedProgramId;
     m_StationList.clear();
     m_StationList = stationList;
 
     m_AsapEndDateTime = m_EndDateTime = Global::AdjustedTime::Instance().GetCurrentDateTime().addSecs(asapEndTime);
 
     m_bIsFirstStepFixation = IsFixationInFirstStep();
-    pProgramPanel->ProgramSelected(m_SelectedProgramId, asapEndTime, m_bIsFirstStepFixation, m_StationList, cmd.GetFirstProgramStepIndex());
-    emit ProgramSelected(m_SelectedProgramId, m_StationList);
+    pProgramPanel->OnProgramSelected(m_NewSelectedProgramId, asapEndTime, m_bIsFirstStepFixation, m_StationList, cmd.GetFirstProgramStepIndex());
+    emit ProgramSelected(m_NewSelectedProgramId, m_StationList);
     emit SendAsapDateTime(asapEndTime, m_bIsFirstStepFixation, false);
     emit UpdateSelectedStationList(m_StationList);
-    m_ProgramStageStatus = Undefined;
+    pProgramPanel->SetProgramStageStatus(Undefined);
 }
 
 bool CDashboardWidget::IsFixationInFirstStep()
@@ -1646,65 +1675,104 @@ void CDashboardWidget::OnStationSuckDrain(const MsgClasses::CmdStationSuckDrain 
 /****************************************************************************/
 void CDashboardWidget::OnUserRoleChanged()
 {
-    if (!m_SelectedProgramId.isEmpty() && m_SelectedProgramId.at(0) == 'C')
-    return;
+    bool isCleanA = (!ui->programPanelWidgetA->GetSelectProgramID().isEmpty() && ui->programPanelWidgetA->GetSelectProgramID().at(0) == 'C');
+    bool isCleanB = (!ui->programPanelWidgetB->GetSelectProgramID().isEmpty() && ui->programPanelWidgetB->GetSelectProgramID().at(0) == 'C');
 
     if (m_IsDrainingWhenPrgrmCompleted) {
-        ui->programPanelWidgetA->EnablePauseButton(false);
-        ui->programPanelWidgetA->EnableStartButton(false);
+        if (!isCleanA)
+        {
+            ui->programPanelWidgetA->EnablePauseButton(false);
+            ui->programPanelWidgetA->EnableStartButton(false);
+        }
 
-        ui->programPanelWidgetB->EnablePauseButton(false);
-        ui->programPanelWidgetB->EnableStartButton(false);
+        if (!isCleanB)
+        {
+            ui->programPanelWidgetB->EnablePauseButton(false);
+            ui->programPanelWidgetB->EnableStartButton(false);
+        }
         return;
     }
 
     if (Core::CGlobalHelper::GetSystemErrorStatus())
         return;
 
+    ProgramStatus_t programStatusA = ui->programPanelWidgetA->GetProgramStatus();
+    ProgramStatus_t programStatusB = ui->programPanelWidgetB->GetProgramStatus();
     if (MainMenu::CMainWindow::GetCurrentUserRole() == MainMenu::CMainWindow::Operator)
     {
-        if (m_ProgramStatus == ProgramRunning || m_ProgramStatus == Paused)
+        if (!isCleanA && ( programStatusA == ProgramRunning || programStatusA == Paused ))
         {
-            if (m_ProgramStatus == ProgramRunning)
+            if (programStatusA == ProgramRunning)
             {
-                if (m_CurProgramStepIndex < 3)
+                if (ui->programPanelWidgetA->GetCurProgramStep() < 3)
                 {
-                    if (m_ProgramStageStatus == Enabled)
+                    if (ui->programPanelWidgetA->GetStageStatus() == Enabled)
                     {
                         ui->programPanelWidgetA->EnablePauseButton(true);
-                        ui->programPanelWidgetB->EnablePauseButton(true);
                     }
                  }
                 else// >3rd step
                 {
                     ui->programPanelWidgetA->EnablePauseButton(false);
+                }
+            }
+
+            //Abort
+            if (ui->programPanelWidgetA->GetCurProgramStep() == 0 || programStatusA == Paused)
+            {
+                ui->programPanelWidgetA->EnableStartButton(true);
+            }
+            else
+            {
+                ui->programPanelWidgetA->EnableStartButton(false);
+            }
+        }
+
+        if (!isCleanB && ( programStatusB == ProgramRunning || programStatusB == Paused ))
+        {
+            if (programStatusB == ProgramRunning)
+            {
+                if (ui->programPanelWidgetB->GetCurProgramStep() < 3)
+                {
+                    if (ui->programPanelWidgetB->GetStageStatus() == Enabled)
+                    {
+                        ui->programPanelWidgetB->EnablePauseButton(true);
+                    }
+                 }
+                else// >3rd step
+                {
                     ui->programPanelWidgetB->EnablePauseButton(false);
                 }
             }
 
             //Abort
-            if (m_CurProgramStepIndex == 0 || m_ProgramStatus == Paused)
+            if (ui->programPanelWidgetB->GetCurProgramStep() == 0 || programStatusB == Paused)
             {
-                ui->programPanelWidgetA->EnableStartButton(true);
                 ui->programPanelWidgetB->EnableStartButton(true);
             }
             else
             {
-                ui->programPanelWidgetA->EnableStartButton(false);
                 ui->programPanelWidgetB->EnableStartButton(false);
             }
         }
     }
     else //Supervior or service
     {
-        if (m_ProgramStatus == ProgramRunning || m_ProgramStatus == Paused)
+        if (!isCleanA && ( programStatusA == ProgramRunning || programStatusA == Paused ))
         {
-            if (m_ProgramStatus == ProgramRunning)
+            if (programStatusA == ProgramRunning)
             {
-                ui->programPanelWidgetA->EnablePauseButton(m_ProgramStageStatus == Enabled);
-                ui->programPanelWidgetB->EnablePauseButton(m_ProgramStageStatus == Enabled);
+                ui->programPanelWidgetA->EnablePauseButton(ui->programPanelWidgetA->GetStageStatus() == Enabled);
             }
             ui->programPanelWidgetA->EnableStartButton(true);
+        }
+
+        if (!isCleanB && ( programStatusB == ProgramRunning || programStatusB == Paused ))
+        {
+            if (programStatusB == ProgramRunning)
+            {
+                ui->programPanelWidgetB->EnablePauseButton(ui->programPanelWidgetB->GetStageStatus() == Enabled);
+            }
             ui->programPanelWidgetB->EnableStartButton(true);
         }
     }

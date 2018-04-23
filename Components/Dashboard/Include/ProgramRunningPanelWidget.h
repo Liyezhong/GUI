@@ -160,6 +160,10 @@ namespace Dashboard {
          */
         /****************************************************************************/
         void OnUserSetEndDateTime(const QDateTime& dateTime);
+
+        void ProgramSelected(QString& programId, int asapEndTime,
+                             bool bIsFirstStepFixation, QList<QString>& selectedStationList,
+                             int firstProgramStepIndex);
     protected:
         /****************************************************************************/
         /*!
@@ -201,9 +205,7 @@ namespace Dashboard {
          *  \brief  Definition/Declaration of slot ProgramSelected
          */
         /****************************************************************************/
-        void ProgramSelected(QString& programId, int asapEndTime,
-                             bool bIsFirstStepFixation, QList<QString>& selectedStationList,
-                             int firstProgramStepIndex);
+
         /****************************************************************************/
         /*!
          *  \brief  Definition/Declaration of slot UpdateEndDateTime

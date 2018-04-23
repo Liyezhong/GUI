@@ -38,6 +38,26 @@ namespace Ui {
     class CProgramPanelWidget;
 }
 
+///Program stage status, some stage(filling/draining) the "Pause" button can not be pressed.
+///so it should be disabled.
+typedef enum {
+    Undefined,
+    Enabled,
+    Disabled
+} ProgramStageStatus_t;
+
+///Program status, defined for "Start", "Abort" button status control
+typedef enum {
+    Undefined_ProgramStatus,
+    ProgramRunning,
+    Paused,
+    Aborting,
+    Completed,
+    CompletedAsSafeReagent,
+    CompletedAsPowerFailure,
+    Aborted
+} ProgramStatus_t;
+
 /****************************************************************************/
 /*!
  *  \brief  Definition/Declaration of class Dashboard::CProgramPanelWidget
@@ -221,6 +241,14 @@ public slots:
     /****************************************************************************/
     void OnProgramActionStarted(DataManager::ProgramActionType_t ProgramActionType, int remainingTimeTotal,
                                 const QDateTime& startDateTime, bool IsResume);//in seconds
+
+    /****************************************************************************/
+    /*!
+     *  \brief  Definition/Declaration of OnProgramSelected
+     */
+    /****************************************************************************/
+    void OnProgramSelected(QString& ProgramId, int asapEndTime,
+                           bool bIsFirstStepFixation, QList<QString>& selectedStationList, int firstProgramStepIndex);
 signals:
     /****************************************************************************/
     /*!
@@ -340,6 +368,18 @@ public:
      /****************************************************************************/
      void OnPreTestDone();
 
+     ProgramStageStatus_t GetStageStatus() const{ return m_ProgramStageStatus; }
+     void SetProgramStageStatus(const ProgramStageStatus_t& stageStatus) { m_ProgramStageStatus = stageStatus; }
+
+     ProgramStatus_t GetProgramStatus() const{ return m_ProgramStatus; }
+     void SetProgramStatus(const ProgramStatus_t& status) { m_ProgramStatus = status;}
+
+     int GetCurProgramStep() const{return m_CurProgramStepIndex;}
+     void SetCurPorgramStep(int StepIndex) { m_CurProgramStepIndex = StepIndex; }
+
+     const QString& GetSelectProgramID() const{ return m_SelectedProgramId; }
+     void SetSelectProgramID(const QString& ProgramID) { m_SelectedProgramId = ProgramID; }
+
 private slots:
      /****************************************************************************/
      /*!
@@ -347,13 +387,6 @@ private slots:
       */
      /****************************************************************************/
     void OnButtonClicked(int whichBtn);
-    /****************************************************************************/
-    /*!
-     *  \brief  Definition/Declaration of OnProgramSelected
-     */
-    /****************************************************************************/
-    void OnProgramSelected(QString& ProgramId, int asapEndTime,
-                           bool bIsFirstStepFixation, QList<QString>& selectedStationList);
 
     /****************************************************************************/
     /*!
@@ -431,6 +464,10 @@ private:
     bool m_pauseButtonDisabledAsSysError;
     bool m_ProgramStartReady;
     bool m_bWaitRotaryValveHeatingPrompt;
+
+    ProgramStageStatus_t m_ProgramStageStatus;
+    ProgramStatus_t m_ProgramStatus;
+    int m_CurProgramStepIndex;
 
     //QMap<QString, QPair<QString, QString>> m_RetortProgram; // retort, selected program, confirmed program
     QString m_RetortName;

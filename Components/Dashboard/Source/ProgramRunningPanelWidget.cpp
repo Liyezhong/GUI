@@ -327,9 +327,9 @@ void CProgramRunningPanelWidget::SetSelectedProgramId(const QString& programID)
 
 void CProgramRunningPanelWidget::OnProcessStateChanged()
 {
-   bool bProcessRunning = MainMenu::CMainWindow::GetProcessRunningStatus();
-   if (!bProcessRunning)
-    mp_ProgressTimer->stop();//the progress bar and Time countdown will stop
+//   bool bProcessRunning = MainMenu::CMainWindow::GetProcessRunningStatus();
+//   if (!bProcessRunning)
+//        mp_ProgressTimer->stop();//the progress bar and Time countdown will stop
 }
 
 void CProgramRunningPanelWidget::UpdateProgramTimerStatus(bool enable)

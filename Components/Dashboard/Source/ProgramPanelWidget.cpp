@@ -29,7 +29,10 @@ CProgramPanelWidget::CProgramPanelWidget(QWidget *p) :
     m_startButtonDisabledAsSysError(false),
     m_pauseButtonDisabledAsSysError(false),
     m_ProgramStartReady(false),
-    m_bWaitRotaryValveHeatingPrompt(false)
+    m_bWaitRotaryValveHeatingPrompt(false),
+    m_ProgramStageStatus(Undefined),
+    m_ProgramStatus(Undefined_ProgramStatus),
+    m_CurProgramStepIndex(-1)
 {
     ui->setupUi(GetContentFrame());
     SetPanelTitle(tr("Programs"));
@@ -45,11 +48,11 @@ CProgramPanelWidget::CProgramPanelWidget(QWidget *p) :
 
     CONNECTSIGNALSLOT(ui->favoriteProgramsPanel, UpdateFavProgram(), this, OnUpdatePanelProgram());
 
-    CONNECTSIGNALSLOT(this, ProgramSelected(QString&, int, bool, QList<QString>&, int),
-                      ui->programRunningPanel, ProgramSelected(QString&, int, bool, QList<QString>&, int));
+//    CONNECTSIGNALSLOT(this, ProgramSelected(QString&, int, bool, QList<QString>&, int),
+//                      ui->programRunningPanel, ProgramSelected(QString&, int, bool, QList<QString>&, int));
 
-    CONNECTSIGNALSLOT(this, ProgramSelected(QString&, int, bool, QList<QString>&, int),
-                      this, OnProgramSelected(QString&, int, bool, QList<QString>&));
+//    CONNECTSIGNALSLOT(this, ProgramSelected(QString&, int, bool, QList<QString>&, int),
+//                      this, OnProgramSelected(QString&, int, bool, QList<QString>&, ));
 
     CONNECTSIGNALSLOT(this, UndoProgramSelection(),
                       ui->favoriteProgramsPanel, UndoProgramSelection());
@@ -135,8 +138,6 @@ void CProgramPanelWidget::RetranslateUI()
 
 void CProgramPanelWidget::SetPtrToMainWindow(MainMenu::CMainWindow *p_MainWindow, Core::CDataConnector *p_DataConnector, const QString& RetortID)
 {
-    qDebug()<<"******************* panel widget set to main window:"<<RetortID;
-
     ui->favoriteProgramsPanel->SetPtrToMainWindow(p_MainWindow, p_DataConnector, RetortID);
     mp_DataConnector = p_DataConnector;
     m_pUserSetting = mp_DataConnector->SettingsInterface->GetUserSettings();
@@ -193,12 +194,12 @@ void CProgramPanelWidget::UpdateProgramTimerStatus(const QString& RetortID, bool
 }
 
 void CProgramPanelWidget::OnProgramSelected(QString& ProgramId, int asapEndTime, bool bIsFirstStepFixation,
-                                            QList<QString>& selectedStationList)
+                                            QList<QString>& selectedStationList, int firstProgramStepIndex)
 {
-    Q_UNUSED(bIsFirstStepFixation);
-
     m_SelectedProgramId = ProgramId;
     m_EndDateTime = Global::AdjustedTime::Instance().GetCurrentDateTime().addSecs(asapEndTime);
+
+    ui->programRunningPanel->ProgramSelected(ProgramId, asapEndTime, bIsFirstStepFixation, selectedStationList, firstProgramStepIndex);
 
     if (m_ProgramNextAction != DataManager::PROGRAM_START)
     {

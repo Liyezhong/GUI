@@ -133,11 +133,10 @@ void CFavoriteProgramsPanelWidget::AddItemsToFavoritePanel(bool bOnlyAddCleaning
             label->setVisible(false);
         }
     }
-    qDebug()<<"****************** add favorite program 11111";
+
     if (!mp_DataConnector)
     return;
 
-    qDebug()<<"****************** add favorite program 222222";
     m_FavProgramIDs.clear();
     mp_ProgramList = mp_DataConnector->ProgramList;
     if (bOnlyAddCleaningProgram)
