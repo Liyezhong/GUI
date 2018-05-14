@@ -59,13 +59,13 @@ void CProgramRunningPanelWidget::OnProgramActionStopped(DataManager::ProgramStat
     }
     else if (DataManager::PROGRAM_STATUS_ABORTED == ProgramStatusType)
     {
-        ui->lblReagentName->setText(m_strAborted);
+        ui->lblStepName->setText(m_strAborted);
         ui->lblRemainTime->setText("00:00:00");
         m_isAborting = false;
     }
     else if (DataManager::PROGRAM_STATUS_COMPLETED == ProgramStatusType)
     {
-        ui->lblReagentName->setText(m_strCompleted);
+        ui->lblStepName->setText(m_strCompleted);
         ui->lblRemainTime->setText("00:00");
     }
     ui->stepTimeLabel->setVisible(false);
@@ -93,7 +93,7 @@ void CProgramRunningPanelWidget::OnProgramActionStarted(DataManager::ProgramActi
    ui->lblReagentName->setVisible(true);
    if (DataManager::PROGRAM_ABORT == ProgramActionType)
    {
-        ui->lblReagentName->setText(m_strAborting);//only show the first label
+        ui->lblStepName->setText(m_strAborting);//only show the first label
 
         ui->lblStepTime->setVisible(false);
         ui->stepTimeLabel->setVisible(false);
@@ -111,11 +111,20 @@ void CProgramRunningPanelWidget::OnCurrentProgramStepInforUpdated(const MsgClass
 {
     qDebug()<<"CProgramRunningPanelWidget::OnCurrentProgramStepInforUpdated  cmd="<<cmd.StepName();
 
-    ui->lblReagentName->setText(cmd.StepName());
-    QString timeStr = Core::CGlobalHelper::TimeToString(cmd.CurRemainingTime(), true);
-    ui->lblStepTime->setText(timeStr);
-    m_CurStepRemainingTime = m_CurRemainingTime = cmd.CurRemainingTime();
-    m_CurProgramStepIndex = cmd.CurProgramStepIndex();
+    if (!cmd.ReagentName().isEmpty() || "Program Finished" == cmd.StepName())
+    {
+        ui->lblReagentName->setText(cmd.ReagentName());
+    }
+
+    ui->lblStepName->setText(cmd.StepName());
+
+    if (0 < cmd.CurRemainingTime() && "Program Finished" != cmd.StepName())
+    {
+        QString timeStr = Core::CGlobalHelper::TimeToString(cmd.CurRemainingTime(), true);
+        ui->lblStepTime->setText(timeStr);
+        m_CurStepRemainingTime = m_CurRemainingTime = cmd.CurRemainingTime();
+        m_CurProgramStepIndex = cmd.CurProgramStepIndex();
+    }
 }
 
 void CProgramRunningPanelWidget::OnCurrentProgramStepInforUpdated(const QString& stepName,
@@ -124,7 +133,7 @@ void CProgramRunningPanelWidget::OnCurrentProgramStepInforUpdated(const QString&
                                                                   int stepIndex)
 {
 
-    ui->lblReagentName->setText(stepName);
+    ui->lblStepName->setText(stepName);
     QString timeStr = Core::CGlobalHelper::TimeToString(stepRemainingTime, true);
     ui->lblStepTime->setText(timeStr);
     m_CurStepRemainingTime = m_CurRemainingTime = stepRemainingTime;
